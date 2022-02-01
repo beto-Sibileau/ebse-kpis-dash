@@ -8,12 +8,11 @@
 
 # python modules
 import base64
-from dash import dcc, html, callback_context
+from dash import Dash, dcc, html, callback_context
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State
 from datetime import date, datetime, timedelta
 import io
-from jupyter_dash import JupyterDash
 import numpy as np
 import pandas as pd
 
@@ -359,10 +358,12 @@ amenity_row_type = dbc.Container(
 fontawesome_stylesheet = "https://use.fontawesome.com/releases/v5.8.1/css/all.css"
 # Build App
 # app = JupyterDash(__name__, external_stylesheets=external_stylesheets)
-app = JupyterDash(
+app = Dash(
     __name__, external_stylesheets=[dbc.themes.BOOTSTRAP, fontawesome_stylesheet]
 )
 
+# to deploy using WSGI server
+server = app.server
 # app tittle for web browser
 app.title = "EBSE KPIs"
 
@@ -1087,6 +1088,6 @@ def update_kpis_amenity(
 # In[ ]:
 
 
-# Run app and print out the application URL
-app.run_server(mode="external")
+if __name__ == '__main__':
+    app.run_server(debug=True)
 
