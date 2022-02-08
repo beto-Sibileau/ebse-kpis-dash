@@ -8,6 +8,7 @@
 
 # python modules
 import base64
+import csv
 from dash import Dash, dcc, html, callback_context
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State
@@ -15,6 +16,8 @@ from datetime import date, datetime, timedelta
 import io
 import numpy as np
 import pandas as pd
+import re
+import tempfile
 
 
 # ### App Layout
@@ -104,6 +107,11 @@ appoint_row = dbc.Container(
                             },
                         ),
                         bt_miss,
+                        html.Div(
+                            id="validation-state",
+                            className="output-validate-state",
+                            style={"color": "RoyalBlue", "textAlign": "center",},
+                        ),
                     ]
                 ),
                 width="auto",
@@ -187,14 +195,10 @@ cards_row = dbc.Container(
 cards_row_user = dbc.Container(
     dbc.Row(
         [
+            dbc.Col(create_card("KPI1: Quantitat de persones", 4), width="auto"),
+            dbc.Col(create_card("KPI2: Percentatge de dones", 5), width="auto"),
             dbc.Col(
-                create_card("KPI1: Quantitat de persones usuàries", 4), width="auto"
-            ),
-            dbc.Col(
-                create_card("KPI2: Percentatge de dones usuàries", 5), width="auto"
-            ),
-            dbc.Col(
-                create_card("KPI3: Usuàries més grans i més petites", 6), width="auto"
+                create_card("KPI3: Persones més grans i més petites", 6), width="auto"
             ),
         ],
         justify="evenly",
@@ -202,38 +206,7 @@ cards_row_user = dbc.Container(
     fluid=True,
 )
 
-# # dbc 2 cards deck
-# cards_row_2 = dbc.Container(
-#     dbc.Row([
-#         dbc.Col(
-#             create_card("KPI4: Quantitat de passejades fetes", 4),
-#             width="auto"
-#         ),
-#         dbc.Col(
-#             create_card("KPI5: Quantitat de passejades fetes", 5),
-#             width="auto"
-#         ),
-#     ], justify="evenly"),
-#     fluid=True
-# )
-
-
 # In[ ]:
-
-
-# dbc dropdown: user type (not used --> dbc select instead)
-# dd_user = dbc.DropdownMenu(
-#     label="Tipología d'usuàries",
-#     children=[
-#         "Usuària Gran",
-#         "Usuària amb diversitat funcional",
-#         "Usuària amb malaltía (mental, degenerativa...)",
-#     ],
-#     color="success",
-#     class_name="m-1",
-#     direction="end",
-#     id='my-user-dd'
-# )
 
 # dbc select: user type
 dd_user = dbc.Select(id="my-user-dd", options=[], value="",)
@@ -331,15 +304,84 @@ amenity_row_type = dbc.Container(
         ),
         dbc.Row(
             [
+                dbc.Col(create_card("KPI4: Quantitat de persones", 14), width="auto"),
+                dbc.Col(create_card("KPI5: Percentatge de dones", 15), width="auto"),
                 dbc.Col(
-                    create_card("KPI4: Quantitat de persones usuàries", 14),
+                    create_card("KPI6: Mitjana d’edat de persones", 16), width="auto"
+                ),
+            ],
+            justify="evenly",
+        ),
+    ],
+    fluid=True,
+)
+
+
+# In[ ]:
+
+
+# dbc select: volunteers
+dd_volunteer = dbc.Select(id="my-volunteer-dd", options=[], value="",)
+
+# dbc button: download volunteers data
+bt_dwd = dbc.Button(
+    html.P(
+        ["Click to Download ", html.Code("csv"), " File"],
+        style={"margin-top": "12px", "fontWeight": "bold",},
+    ),
+    id="btn-dwd",
+    class_name="me-1",
+    outline=True,
+    color="info",
+)
+
+# dbc dropdown and one card and download button below: volunteers
+card_row_volunteer = dbc.Container(
+    [
+        dbc.Row(
+            [
+                dbc.Col(
+                    html.Div(
+                        [
+                            html.P(
+                                "Select Volunteer",
+                                style={
+                                    "fontWeight": "bold",
+                                    "fontSize": "18px",
+                                    "marginBottom": "10px",
+                                    "textAlign": "center",
+                                },
+                            ),
+                            dd_volunteer,
+                        ]
+                    ),
                     width="auto",
                 ),
+            ],
+            justify="start",
+            align="start",
+            style={"paddingLeft": "25px", "marginBottom": "30px",},
+        ),
+        dbc.Row(
+            [
+                dbc.Col(create_card("KPI1: Quantitat d’hores", 17), width="auto"),
                 dbc.Col(
-                    create_card("KPI5: Percentatge de dones usuàries", 15), width="auto"
-                ),
-                dbc.Col(
-                    create_card("KPI6: Mitjana d’edat d’usuàries", 16), width="auto"
+                    html.Div(
+                        [
+                            html.P(
+                                "Full Volunteers List",
+                                style={
+                                    "fontWeight": "bold",
+                                    "fontSize": "18px",
+                                    "marginBottom": "10px",
+                                    "textAlign": "center",
+                                },
+                            ),
+                            bt_dwd,
+                            dcc.Download(id="volunteer-dwd"),
+                        ]
+                    ),
+                    width="auto",
                 ),
             ],
             justify="evenly",
@@ -450,13 +492,31 @@ app.layout = html.Div(
         # div 3-cards 2-row: amenities
         dcc.Loading(
             children=html.Div(
-                [amenity_row_type], style={"paddingTop": "0", "margin-bottom": "40px",},
+                [amenity_row_type], style={"paddingTop": "0", "margin-bottom": "0",},
             ),
             id="loading-kpis-amenity",
             type="circle",
             fullscreen=True,
         ),
-        # dbc Modal: output msg from load button - wraped by Spinner?
+        html.Hr(
+            style={
+                "color": "DarkRed",
+                "height": "2px",
+                "margin-top": "30px",
+                "margin-bottom": "15px",
+            }
+        ),
+        # div card row: volunteers
+        dcc.Loading(
+            children=html.Div(
+                [card_row_volunteer],
+                style={"paddingTop": "0", "margin-bottom": "40px",},
+            ),
+            id="loading-kpi-volunteer",
+            type="circle",
+            fullscreen=True,
+        ),
+        # dbc Modal: output msg from load button - wraped by Spinner
         dcc.Loading(
             children=dbc.Modal(
                 [
@@ -479,10 +539,63 @@ app.layout = html.Div(
             type="circle",
             fullscreen=True,
         ),
+        # dbc Modal: output msg from download button - wraped by Spinner
+        dcc.Loading(
+            children=dbc.Modal(
+                [
+                    dbc.ModalHeader(
+                        dbc.ModalTitle("Download Message"), close_button=False
+                    ),
+                    dbc.ModalBody(id="my-modal-body-dwd"),
+                    dbc.ModalFooter(
+                        dbc.Button("Close", id="btn-close-dwd", class_name="ms-auto")
+                    ),
+                ],
+                id="my-modal-dwd",
+                is_open=False,
+                keyboard=False,
+                backdrop="static",
+                scrollable=True,
+                centered=True,
+            ),
+            id="loading-modal-dwd",
+            type="circle",
+            fullscreen=True,
+        ),
+        # dbc Modal: output msg from validation button - wraped by Spinner
+        dcc.Loading(
+            children=dbc.Modal(
+                [
+                    dbc.ModalHeader(
+                        dbc.ModalTitle("Validation Message"), close_button=False
+                    ),
+                    dbc.ModalBody(id="my-modal-body-val"),
+                    dbc.ModalFooter(
+                        dbc.Button("Close", id="btn-close-val", class_name="ms-auto")
+                    ),
+                ],
+                id="my-modal-val",
+                is_open=False,
+                keyboard=False,
+                backdrop="static",
+                scrollable=True,
+                size="lg",
+                centered=True,
+            ),
+            id="loading-modal-val",
+            type="circle",
+            fullscreen=True,
+        ),
         # hidden div: ouput msg from load button
         html.Div(id="output-data-upload", style={"display": "none"}),
+        # hidden div: ouput msg download button
+        html.Div(id="output-data-dwd", style={"display": "none"}),
+        # hidden div: ouput msg validation button
+        html.Div(id="output-data-val", style={"display": "none"}),
         # hidden div: share csv-df in Dash
         html.Div(id="csv-df", style={"display": "none"}),
+        # hidden div: share df-in-dates in Dash
+        html.Div(id="df-in-dates", style={"display": "none"}),
         # hidden div: share df-aprov-dates in Dash
         html.Div(id="df-aprov-dates", style={"display": "none"}),
         # hidden div: share df-cancel-dates in Dash
@@ -506,6 +619,21 @@ app.layout = html.Div(
 )
 def upload_triggers_spinner(_, filename):
     return filename
+
+
+# #### Trigger Validation Printing state
+
+# In[ ]:
+
+
+# showing Validating state trick?
+@app.callback(
+    Output("validation-state", "children"),
+    Input("btn-val", "n_clicks"),
+    prevent_initial_call=True,
+)
+def validate_triggers_spinner(_):
+    return None
 
 
 # #### Upload `csv` File
@@ -540,12 +668,12 @@ def read_csv_file(contents, filename, date):
     # simple column validation: minimum check of exported database
     col_names_2_check = [
         "Cita ID",
+        "Nombre del cliente",
         "Voluntari/a",
         "Servei",
         "Hora incio",
         "Hora final",
         "Número de personas",
-        "EQUIPAMENTS",
         "Tipologia P1",
         "Gènere P1",
         "Edat P1",
@@ -562,20 +690,7 @@ def read_csv_file(contents, filename, date):
     # column list above must be in dataframe
     col_check = [col in app_df.columns for col in col_names_2_check]
     # missing columns
-    miss_col = [i for (i, v) in zip(col_names_2_check, col_check) if v]
-
-    # col_check: OK
-    # if all(col_check):
-    #     # transform datetimes (skipped: lost in json, in kpis_calc)
-    #     # note: lost in json --> strictly could be here done
-    #     app_df.loc[:, "Hora incio"] = pd.to_datetime(
-    #         app_df["Hora incio"], format="%d de %B de %Y %H:%M"
-    #     )
-    #     app_df.loc[:, "Hora final"] = pd.to_datetime(
-    #         app_df["Hora final"], format="%d de %B de %Y %H:%M"
-    #     )
-    # to-be-safe transform small case (skipped: in kpis_calc)
-    # app_df.loc[:, "Servei"] = app_df.Servei.str.lower()
+    miss_col = [i for (i, v) in zip(col_names_2_check, col_check) if not v]
 
     # return ingestion message and read csv
     return (
@@ -652,6 +767,64 @@ def update_modal(msg_in, click_close, is_open):
         return {}, not is_open
 
 
+# #### Return Download message in *Bootstrap Modal*
+
+# In[ ]:
+
+
+@app.callback(
+    Output("my-modal-body-dwd", "children"),
+    Output("my-modal-dwd", "is_open"),
+    Input("output-data-dwd", "children"),
+    Input("btn-close-dwd", "n_clicks"),
+    State("my-modal-dwd", "is_open"),
+    prevent_initial_call=True,
+)
+def update_modal_dwd(msg_dwd, _, is_open_dwd):
+
+    # identify callback context
+    triger_id = callback_context.triggered[0]["prop_id"].split(".")[0]
+
+    # specify action by trigger
+    if "data-dwd" in triger_id:
+        return (
+            html.P(msg_dwd),
+            not is_open_dwd,
+        )
+    else:
+        # button close
+        return {}, not is_open_dwd
+
+
+# #### Return Validation message in *Bootstrap Modal*
+
+# In[ ]:
+
+
+@app.callback(
+    Output("my-modal-body-val", "children"),
+    Output("my-modal-val", "is_open"),
+    Input("output-data-val", "children"),
+    Input("btn-close-val", "n_clicks"),
+    State("my-modal-val", "is_open"),
+    prevent_initial_call=True,
+)
+def update_modal_val(msg_val, _, is_open_val):
+
+    # identify callback context
+    triger_id = callback_context.triggered[0]["prop_id"].split(".")[0]
+
+    # specify action by trigger
+    if "data-val" in triger_id:
+        return (
+            dbc.Container(msg_val),
+            not is_open_val,
+        )
+    else:
+        # button close
+        return {}, not is_open_val
+
+
 # #### Update Cards Body - KPIs `passejades` and `usuaries`
 
 # In[ ]:
@@ -676,8 +849,15 @@ def kpis_calc(df, ini_date, end_date):
     # cast and include end_date
     end_date = pd.Timestamp(date.fromisoformat(end_date) + timedelta(days=1))
 
-    # minimum date not in appointments: return empty
-    if df["Hora incio"].min() < ini_date:
+    # filter `Hora incio` within dates
+    query_dates = [
+        "`Hora incio` >= @ini_date",
+        "`Hora incio` <= @end_date",
+    ]
+    df_in_dates = df.query("&".join(query_dates)).reset_index(drop=True)
+
+    # no entry between dates: return empty
+    if df_in_dates.empty:
         return (
             "N/A",
             "N/A",
@@ -691,25 +871,59 @@ def kpis_calc(df, ini_date, end_date):
             [],
             "",
             {},
+            [],
+            "",
+            {},
         )
 
-    # filter `passejades` and `Hora incio` within dates
-    query_passeig_dates = [
-        "`Hora incio` >= @ini_date",
-        "`Hora incio` <= @end_date",
-        "Servei.str.contains('tricicle', case=False)",
-    ]
-    df_passeig_in_dates = df.query(
-        "&".join(query_passeig_dates), engine="python",
+    # eliminate duplicated `Cita ID` (keep first)
+    dupli_in_dates = df_in_dates.duplicated(subset="Cita ID", keep="first",)
+    df_in_dates.drop(
+        df_in_dates[dupli_in_dates].index, inplace=True,
+    )
+
+    # filter `passejades` within dates
+    df_passeig_in_dates = df_in_dates.query(
+        "Servei.str.contains('tricicle', case=False)", engine="python",
     ).reset_index(drop=True)
 
-    # eliminate duplicated `passejades` (keep first)
-    passeig_dupli = df_passeig_in_dates.duplicated(
-        subset=["Servei", "Hora incio"], keep="first",
-    )
-    df_passeig_in_dates.drop(
-        df_passeig_in_dates[passeig_dupli].index, inplace=True,
-    )
+    # client names: `Nombre del cliente`
+    client_names = df_passeig_in_dates["Nombre del cliente"].dropna().unique()
+    # filter amenities: starting digit/s and point
+    amenity_types = [x for x in client_names if re.findall(r"^\d+", x)]
+
+    # dropdown options: amenity types from `Nombre del cliente`
+    dd_amenity_options = [
+        {"label": " ".join(v.split()[1:]), "value": v}
+        # if pd.notnull(v)
+        # else {"label": "N/A", "value": "N/A"}
+        for v in amenity_types
+    ]
+
+    # add N/A if empty clients
+    if df_passeig_in_dates["Nombre del cliente"].isnull().any():
+        dd_amenity_options.append({"label": "N/A", "value": "N/A"})
+
+    # replace client names as `Usuàries Particulars` if any
+    if len(amenity_types) < len(client_names):
+        # check if `Usuàries Particulars` in amenity_types
+        filter_particulars = (
+            pd.Series(amenity_types).str.contains("usuàries particulars", case=False)
+            if len(amenity_types) > 0
+            else np.array([False])
+        )
+        if filter_particulars.any():
+            private_user = pd.Series(amenity_types)[filter_particulars].values[0]
+        else:
+            private_user = "Usuàries Particulars"
+            dd_amenity_options.append({"label": private_user, "value": private_user})
+
+        # client names to replace
+        clients_map = {
+            k: private_user
+            for k in np.setdiff1d(client_names, amenity_types, assume_unique=True)
+        }
+        df_passeig_in_dates.replace(clients_map, inplace=True, regex=False)
 
     # `passejades` kpi_1: Aproved Number
     query_kpi_1 = "`Número de personas`.str.contains('aprobado', case=False)"
@@ -726,35 +940,14 @@ def kpis_calc(df, ini_date, end_date):
     # `passejades` kpi_3: Total of aproved hours
     kpi_3 = (df_kpi_1["Hora final"] - df_kpi_1["Hora incio"]).dt.components.hours.sum()
 
-    # `usuaries` kpi_1: Total number
-    # query_kpi_1_user = [
-    #     f"`Tipologia P{i}`.fillna('N/A').str.contains('usuària', case=False)"
-    #     for i in range(1,5)
-    # ]
-    # query: at least one user in row --> maybe not needed
-    # df_kpi_1_user = df_kpi_1.query(
-    #     "|".join(query_kpi_1_user),
-    #     engine="python",
-    # ).reset_index(drop=True)
+    # kpi_1: Total number of people
+    kpi_1_people = pd.to_numeric(
+        df_kpi_1["Número de personas"].str.split().str[1], errors="coerce"
+    ).sum()
 
-    # user type columns filters: only users
-    users_masks = [
-        (df_kpi_1[f"Tipologia P{i}"].fillna("N/A").str.contains("usuària", case=False))
-        for i in range(1, 5)
-    ]
-
-    # `usuaries` kpi_1: Total number
-    kpi_1_user = sum([elem.sum() for elem in users_masks])
-
-    # note below: could be non-users
-    # kpi_1_user = pd.to_numeric(
-    #     df_kpi_1_user["Número de personas"].str.split().str[1], errors="coerce"
-    # ).sum()
-
-    # `usuaries` kpi_2: Gender percentage
+    # kpi_2: Gender percentage (all people)
     gender_cols_val_count = [
-        df_kpi_1[elem][f"Gènere P{i + 1}"].value_counts(dropna=True)
-        for i, elem in enumerate(users_masks)
+        df_kpi_1[f"Gènere P{i}"].value_counts(dropna=True) for i in range(1, 5)
     ]
 
     # total number of reported genders
@@ -768,58 +961,61 @@ def kpis_calc(df, ini_date, end_date):
         elem.Home for elem in gender_cols_val_count if "Home" in elem.index
     )
 
-    # `usuaries` kpi_3: extreme ages
-    user_ages = np.concatenate(
-        [df_kpi_1[elem][f"Edat P{i + 1}"] for i, elem in enumerate(users_masks)]
-    )
+    # kpi_3: extreme ages (all people)
+    people_ages = np.concatenate([df_kpi_1[f"Edat P{i}"].dropna() for i in range(1, 5)])
 
-    max_age = int(user_ages.max()) if user_ages.size != 0 else "N/A"
-    min_age = int(user_ages.min()) if user_ages.size != 0 else "N/A"
+    max_age = int(people_ages.max()) if people_ages.size != 0 else "N/A"
+    min_age = int(people_ages.min()) if people_ages.size != 0 else "N/A"
 
-    # note below: could be non-users
-    # max_age = int(df_kpi_1_user[
-    #     [f"Edat P{i}" for i in range(1,5)]
-    # ].max().max())
-    # min_age = int(df_kpi_1_user[
-    #     [f"Edat P{i}" for i in range(1,5)]
-    # ].min().min())
-
-    # user types
-    user_types = np.unique(
+    # people types
+    people_types = np.unique(
         np.concatenate(
-            [
-                df_kpi_1[elem][f"Tipologia P{i + 1}"].unique()
-                for i, elem in enumerate(users_masks)
-            ]
+            [df_kpi_1[f"Tipologia P{i}"].dropna().unique() for i in range(1, 5)]
         )
     )
-    # dropdown options: user types
-    dd_user_options = [{"label": v, "value": v} for v in user_types]
 
-    # dbc dropdown items (not used in favour of dbc select)
-    # dd_user_items = [
-    #     dbc.DropdownMenuItem(elem, id=f"my-item-{i}", n_clicks=0)
-    #     for i, elem in enumerate(user_types)
-    # ]
+    # dropdown options: people types
+    dd_people_options = [{"label": v, "value": v} for v in people_types]
 
-    # amenity types
-    amenity_types = df_passeig_in_dates.EQUIPAMENTS.unique()
-    # dropdown options: amenity types
-    dd_amenity_options = [
-        {"label": v, "value": v} if pd.notnull(v) else {"label": "N/A", "value": "N/A"}
-        for v in amenity_types
-    ]
+    # filter aproved for volunteers list
+    df_volunteer_dates = df_in_dates.query(query_kpi_1, engine="python",).reset_index(
+        drop=True
+    )
+    # replace names if empty: "N/A"
+    df_volunteer_dates["Voluntari/a"].fillna(value="N/A", inplace=True)
 
-    # # warn if missing info by passanger numbers --> save and launch after?
-    # app_df["Número de personas"].str.split()
-    # app_df[col].isnull()
+    # add column hours for volunteers list
+    df_volunteer_dates["Hours"] = (
+        df_volunteer_dates["Hora final"] - df_volunteer_dates["Hora incio"]
+    ).dt.components.hours
+    # aggregate df_volunteer_dates for volunteers list
+    df_volunteer_list = (
+        df_volunteer_dates.groupby("Voluntari/a", sort=False)
+        .agg({"Hours": "sum", "Servei": "last", "Hora incio": "last",})
+        .reset_index()
+        .sort_values("Hours", ascending=False, ignore_index=True)
+        .rename(columns={"Servei": "Last Servei", "Hora incio": "Last Date"})
+    )
+    df_volunteer_list.loc[:, "Last Date"] = df_volunteer_list["Last Date"].dt.strftime(
+        "%Y-%m-%d"
+    )
+    df_volunteer_list.loc[:, "Voluntari/a"] = (
+        df_volunteer_list["Voluntari/a"]
+        .str.replace(r"^\d+.", "", regex=True)
+        .str.strip()
+    )
+
+    # volunteers: `Voluntari/a`
+    volunteer_names = df_volunteer_list["Voluntari/a"].sort_values().values
+    # dropdown options: volunteer names
+    dd_volunteer_options = [{"label": v, "value": v} for v in volunteer_names]
 
     # return kpis 1 to 6
     return (
         f"{str(len(df_kpi_1))}",
         f"{str(len(df_kpi_2))}",
         f"{str(kpi_3)}",
-        f"{str(kpi_1_user)}",
+        f"{str(kpi_1_people)}",
         (
             f"{total_fema_report/total_gen_report*100:3.1f}%"
             if total_gen_report != 0
@@ -830,7 +1026,7 @@ def kpis_calc(df, ini_date, end_date):
             if (type(max_age) != str) and (type(min_age) != str)
             else "N/A"
         ),
-        dd_user_options,
+        dd_people_options,
         "",
         # csv to json: sharing data within Dash
         df_kpi_1.to_json(orient="split"),
@@ -838,6 +1034,10 @@ def kpis_calc(df, ini_date, end_date):
         "",
         # csv to json: sharing data within Dash
         df_kpi_2.to_json(orient="split"),
+        dd_volunteer_options,
+        "",
+        # csv to json: sharing data within Dash
+        df_volunteer_list.to_json(orient="split"),
     )
 
 
@@ -857,6 +1057,9 @@ def kpis_calc(df, ini_date, end_date):
     Output("my-amenity-dd", "options"),
     Output("my-amenity-dd", "value"),
     Output("df-cancel-dates", "children"),
+    Output("my-volunteer-dd", "options"),
+    Output("my-volunteer-dd", "value"),
+    Output("df-in-dates", "children"),
     Input("my-date-picker-range", "start_date"),
     Input("my-date-picker-range", "end_date"),
     Input("btn-close", "n_clicks"),
@@ -874,6 +1077,9 @@ def update_kpis(start_date, end_date, _, app_df):
             "N/A",
             "N/A",
             "N/A",
+            [],
+            "",
+            {},
             [],
             "",
             {},
@@ -958,12 +1164,10 @@ def kpis_calc_user_type(df_filtered, user_type):
     Output("card-val-9", "children"),
     Output("card-val-10", "children"),
     Input("my-user-dd", "value"),
-    Input("my-date-picker-range", "start_date"),
-    Input("my-date-picker-range", "end_date"),
     State("df-aprov-dates", "children"),
     prevent_initial_call=True,
 )
-def update_kpis_user_type(user_type, dummy_start, dummy_end, df_in_date):
+def update_kpis_user_type(user_type, df_in_date):
     if not df_in_date or user_type == "":
         return "N/A", "N/A", "N/A", "N/A"
     else:
@@ -983,45 +1187,34 @@ def kpis_calc_amenity(df_aprov, df_cancel, amenity):
         df_aprov, orient="split", convert_dates=["Hora incio", "Hora final"],
     )
     # capture empty as "N/A"
-    df_aprov.EQUIPAMENTS.fillna(value="N/A", inplace=True)
+    df_aprov["Nombre del cliente"].fillna(value="N/A", inplace=True)
 
     # json to dataframe: cancelled within dates
     df_cancel = pd.read_json(
         df_cancel, orient="split", convert_dates=["Hora incio", "Hora final"],
     )
     # capture empty as "N/A"
-    df_cancel.EQUIPAMENTS.fillna(value="N/A", inplace=True)
+    df_cancel["Nombre del cliente"].fillna(value="N/A", inplace=True)
 
     # filter amenity aproved
-    df_kpi_1 = df_aprov.query("EQUIPAMENTS == @amenity").reset_index(drop=True)
-
-    # # transform amenity aproved datetimes (above by pd.read_json)
-    # df_kpi_1.loc[:, "Hora incio"] = pd.to_datetime(
-    #     df_kpi_1["Hora incio"], format="%d de %B de %Y %H:%M"
-    # )
-    # df_kpi_1.loc[:, "Hora final"] = pd.to_datetime(
-    #     df_kpi_1["Hora final"], format="%d de %B de %Y %H:%M"
-    # )
+    df_kpi_1 = df_aprov.query("`Nombre del cliente` == @amenity").reset_index(drop=True)
 
     # filter amenity cancelled
-    df_kpi_2 = df_cancel.query("EQUIPAMENTS == @amenity").reset_index(drop=True)
+    df_kpi_2 = df_cancel.query("`Nombre del cliente` == @amenity").reset_index(
+        drop=True
+    )
 
     # `passejades` in amenity kpi_3: Total of aproved hours
     kpi_3 = (df_kpi_1["Hora final"] - df_kpi_1["Hora incio"]).dt.components.hours.sum()
 
-    # user type columns filters: aproved users in amenity
-    users_in_amenity = [
-        (df_kpi_1[f"Tipologia P{i}"].fillna("N/A").str.contains("usuària", case=False))
-        for i in range(1, 5)
-    ]
+    # kpi_4: Total number of people in amenity
+    kpi_4 = pd.to_numeric(
+        df_kpi_1["Número de personas"].str.split().str[1], errors="coerce"
+    ).sum()
 
-    # kpi_4: Total number of aproved `usuaries` in amenity
-    kpi_4 = sum([elem.sum() for elem in users_in_amenity])
-
-    # kpi_5: Gender percentage of aproved `usuaries` in amenity
+    # kpi_5: Gender percentage of aproved people in amenity
     gender_cols_count_amenity = [
-        df_kpi_1[elem][f"Gènere P{i + 1}"].value_counts(dropna=True)
-        for i, elem in enumerate(users_in_amenity)
+        df_kpi_1[f"Gènere P{i}"].value_counts(dropna=True) for i in range(1, 5)
     ]
 
     # total number of reported genders in amenity
@@ -1035,13 +1228,13 @@ def kpis_calc_amenity(df_aprov, df_cancel, amenity):
         elem.Home for elem in gender_cols_count_amenity if "Home" in elem.index
     )
 
-    # kpi_6: mean age of aproved `usuaries` in amenity
-    user_ages_amenity = np.concatenate(
-        [df_kpi_1[elem][f"Edat P{i + 1}"] for i, elem in enumerate(users_in_amenity)]
+    # kpi_6: mean age of aproved people in amenity
+    people_ages_amenity = np.concatenate(
+        [df_kpi_1[f"Edat P{i}"].dropna() for i in range(1, 5)]
     )
 
     amenity_mean_age = (
-        user_ages_amenity.mean() if user_ages_amenity.size != 0 else "N/A"
+        people_ages_amenity.mean() if people_ages_amenity.size != 0 else "N/A"
     )
 
     # return kpis 1 to 6
@@ -1070,24 +1263,210 @@ def kpis_calc_amenity(df_aprov, df_cancel, amenity):
     Output("card-val-15", "children"),
     Output("card-val-16", "children"),
     Input("my-amenity-dd", "value"),
-    Input("my-date-picker-range", "start_date"),
-    Input("my-date-picker-range", "end_date"),
     State("df-aprov-dates", "children"),
     State("df-cancel-dates", "children"),
     prevent_initial_call=True,
 )
-def update_kpis_amenity(
-    amenity, dummy_start, dummy_end, df_aprov_in_date, df_cancel_in_date
-):
+def update_kpis_amenity(amenity, df_aprov_in_date, df_cancel_in_date):
     if (not df_aprov_in_date and not df_cancel_in_date) or amenity == "":
         return "N/A", "N/A", "N/A", "N/A", "N/A", "N/A"
     else:
         return kpis_calc_amenity(df_aprov_in_date, df_cancel_in_date, amenity)
 
 
+# #### Update Cards Body - KPI `Totals per persona voluntària`
+
 # In[ ]:
 
 
-if __name__ == '__main__':
-    app.run_server(debug=True)
+# filter aggregated volunteer list within dates
+def kpi_calc_volunteer(df_volunteer_list, volunteer):
 
+    # json to dataframe
+    df = pd.read_json(df_volunteer_list, orient="split")
+
+    # user type columns filters
+    kpi_1 = df.query("`Voluntari/a` == @volunteer").Hours.values[0]
+
+    # volunteer kpi
+    return f"{str(kpi_1)}"
+
+
+# In[ ]:
+
+
+@app.callback(
+    Output("card-val-17", "children"),
+    Input("my-volunteer-dd", "value"),
+    State("df-in-dates", "children"),
+    prevent_initial_call=True,
+)
+def update_kpi_volunteers(volunteer, df_volunteer_dates):
+    if not df_volunteer_dates or volunteer == "":
+        return "N/A"
+    else:
+        return kpi_calc_volunteer(df_volunteer_dates, volunteer)
+
+
+# #### Download Volunteers `csv` File
+
+# In[ ]:
+
+
+# callback download conversion
+@app.callback(
+    Output("output-data-dwd", "children"),
+    Output("volunteer-dwd", "data"),
+    Input("btn-dwd", "n_clicks"),
+    State("df-in-dates", "children"),
+    prevent_initial_call=True,
+)
+def download_volunteers_list(_, df_volunteer_dates):
+    if not df_volunteer_dates:
+        return (
+            [
+                html.Strong("No Data"),
+                html.Br(),
+                "1) Please Upload ",
+                html.Code("csv"),
+                " File",
+                html.Br(),
+                "2) Please Verify ",
+                html.Em("Selected Dates"),
+            ],
+            None,
+        )
+    else:
+        df = pd.read_json(df_volunteer_dates, orient="split")
+        df_temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".csv")
+        df_temp_file.flush()
+        df.to_csv(
+            df_temp_file.name,
+            index=False,
+            encoding="utf-8-sig",
+            quoting=csv.QUOTE_NONNUMERIC,
+        )
+        return (
+            [
+                html.Strong("Data Downloaded"),
+                html.Br(),
+                "File ",
+                html.Code("totals_voluntaries.csv"),
+            ],
+            # dcc.send_data_frame --> encoding not working apparently
+            # use instead dcc.send_file
+            dcc.send_file(df_temp_file.name, filename="totals_voluntaries.csv"),
+        )
+
+
+# #### Validate Appointments `csv` File: aproved `passejades` missing information
+
+# In[ ]:
+
+
+# callback validation
+@app.callback(
+    Output("output-data-val", "children"),
+    Input("btn-val", "n_clicks"),
+    State("df-aprov-dates", "children"),
+    prevent_initial_call=True,
+)
+def validate_missing(_, df_aprov_in_date):
+    if not df_aprov_in_date:
+
+        return [
+            html.P(
+                [
+                    html.Strong("No Data"),
+                    html.Br(),
+                    "1) Please Upload ",
+                    html.Code("csv"),
+                    " File",
+                    html.Br(),
+                    "2) Please Verify ",
+                    html.Em("Selected Dates"),
+                ]
+            )
+        ]
+
+    else:
+
+        df = pd.read_json(df_aprov_in_date, orient="split")
+        # split number of aproved users
+        df.loc[:, "Número de personas"] = pd.to_numeric(
+            df["Número de personas"].str.split().str[1], errors="coerce",
+        )
+
+        # users information columns
+        user_info_cols = [
+            [f"Tipologia P{i}", f"Gènere P{i}", f"Edat P{i}",] for i in range(1, 5)
+        ]
+        # filter nulls matrix
+        null_matrix = np.array(
+            [df[elem].notnull().all(axis="columns").values for elem in user_info_cols]
+        )
+
+        # # filter incomplete accordingly --> below, inconsistent preferred
+        # is_not_complete = [
+        #     not null_matrix[:elem, i].all()
+        #     for i, elem in enumerate(df["Número de personas"].values)
+        # ]
+
+        # filter inconsistent accordingly
+        is_not_consistent = [
+            null_matrix[:, i].sum() != elem
+            for i, elem in enumerate(df["Número de personas"].values)
+        ]
+
+        # display columns appended
+        user_info_cols.insert(0, ["Número de personas"])
+        user_info_cols.insert(0, ["Cita ID"])
+        df_not_complete = df[is_not_consistent][
+            np.concatenate(user_info_cols)
+        ].reset_index(drop=True)
+
+        if df_not_complete.empty:
+
+            return [
+                html.P(
+                    [
+                        html.Strong("Successfully Validated"),
+                        html.Br(),
+                        "All ",
+                        html.Code("passejades aprovades"),
+                        " are ",
+                        html.Em("fully completed"),
+                    ]
+                )
+            ]
+
+        else:
+
+            return [
+                html.P(
+                    [
+                        html.Strong("Missing Information"),
+                        html.Br(),
+                        "Check ",
+                        html.Code("Cita ID"),
+                        html.Em(" below:"),
+                        html.Br(),
+                        dbc.Table.from_dataframe(
+                            df_not_complete,
+                            striped=True,
+                            bordered=True,
+                            hover=True,
+                            responsive=True,
+                            size="sm",
+                            color="warning",
+                        ),
+                    ]
+                )
+            ]
+
+
+# In[ ]:
+
+
+if __name__ == "__main__":
+    app.run_server(debug=True)

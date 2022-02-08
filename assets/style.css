@@ -9,6 +9,16 @@
     visibility: visible;
 }
 
+*[class="output-validate-state"][data-dash-is-loading="true"]{
+    visibility: hidden;
+}
+*[class="output-validate-state"][data-dash-is-loading="true"]::before{
+    content: "Validating...";
+    display: inline-block;
+    color: RoyalBlue;
+    visibility: visible;
+}
+
 .DateRangePickerInput__withBorder {
     border: 0;
 }
