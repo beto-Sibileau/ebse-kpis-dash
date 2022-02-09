@@ -1419,8 +1419,9 @@ def validate_missing(_, df_aprov_in_date):
         ]
 
         # display columns appended
-        user_info_cols.insert(0, ["Número de personas"])
-        user_info_cols.insert(0, ["Cita ID"])
+        user_info_cols.insert(
+            0, ["Cita ID", "Servei", "Hora incio", "Número de personas"]
+        )
         df_not_complete = df[is_not_consistent][
             np.concatenate(user_info_cols)
         ].reset_index(drop=True)
