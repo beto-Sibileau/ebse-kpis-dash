@@ -1391,7 +1391,9 @@ def validate_missing(_, df_aprov_in_date):
 
     else:
 
-        df = pd.read_json(df_aprov_in_date, orient="split", convert_dates="Hora incio")
+        df = pd.read_json(
+            df_aprov_in_date, orient="split", convert_dates=["Hora incio"]
+        )
         # split number of aproved users
         df.loc[:, "Número de personas"] = pd.to_numeric(
             df["Número de personas"].str.split().str[1], errors="coerce",
