@@ -1127,7 +1127,7 @@ def kpis_calc_user_type(df_filtered, user_type):
 
     # user type kpi_3 and 4: extreme and mean ages
     user_type_ages = np.concatenate(
-        [df[elem][f"Edat P{i + 1}"] for i, elem in enumerate(user_type_masks)]
+        [df[elem][f"Edat P{i + 1}"].dropna() for i, elem in enumerate(user_type_masks)]
     )
 
     user_type_max_age = int(user_type_ages.max()) if user_type_ages.size != 0 else "N/A"
