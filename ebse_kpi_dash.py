@@ -882,9 +882,11 @@ def kpis_calc(df, ini_date, end_date):
         df_in_dates[dupli_in_dates].index, inplace=True,
     )
 
-    # filter `passejades` within dates
+    # filter `passejades` within dates (AND exclude maintenance key words)
+    servei_key = "Servei.str.contains('tricicle', case=False)"
+    maintain_key = "Servei.str.contains('trasllat|manteniment', case=False)"
     df_passeig_in_dates = df_in_dates.query(
-        "Servei.str.contains('tricicle', case=False)", engine="python",
+        f"{servei_key}&~{maintain_key}", engine="python",
     ).reset_index(drop=True)
 
     # client names: `Nombre del cliente`
