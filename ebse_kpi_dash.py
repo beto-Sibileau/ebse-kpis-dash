@@ -989,7 +989,9 @@ def kpis_calc(df, ini_date, end_date):
     # add column hours for volunteers list
     df_volunteer_dates["Hours"] = (
         df_volunteer_dates["Hora final"] - df_volunteer_dates["Hora incio"]
-    ).dt.components.hours
+    ).dt.components.hours + (
+        df_volunteer_dates["Hora final"] - df_volunteer_dates["Hora incio"]
+    ).dt.components.minutes / 60
     # aggregate df_volunteer_dates for volunteers list
     df_volunteer_list = (
         df_volunteer_dates.groupby("Voluntari/a", sort=False)
