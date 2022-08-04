@@ -940,7 +940,11 @@ def kpis_calc(df, ini_date, end_date):
     )
 
     # `passejades` kpi_3: Total of aproved hours
-    kpi_3 = (df_kpi_1["Hora final"] - df_kpi_1["Hora incio"]).dt.components.hours.sum()
+    kpi_3 = (
+        df_kpi_1["Hora final"] - df_kpi_1["Hora incio"]
+    ).dt.components.hours.sum() + (
+        df_kpi_1["Hora final"] - df_kpi_1["Hora incio"]
+    ).dt.components.minutes.sum() / 60
 
     # kpi_1: Total number of people
     kpi_1_people = pd.to_numeric(
@@ -1209,7 +1213,11 @@ def kpis_calc_amenity(df_aprov, df_cancel, amenity):
     )
 
     # `passejades` in amenity kpi_3: Total of aproved hours
-    kpi_3 = (df_kpi_1["Hora final"] - df_kpi_1["Hora incio"]).dt.components.hours.sum()
+    kpi_3 = (
+        df_kpi_1["Hora final"] - df_kpi_1["Hora incio"]
+    ).dt.components.hours.sum() + (
+        df_kpi_1["Hora final"] - df_kpi_1["Hora incio"]
+    ).dt.components.minutes.sum() / 60
 
     # kpi_4: Total number of people in amenity
     kpi_4 = pd.to_numeric(
