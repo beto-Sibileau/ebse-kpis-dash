@@ -891,7 +891,7 @@ def kpis_calc(df, ini_date, end_date):
 
     # client names: `Nombre del cliente`
     client_names = df_passeig_in_dates["Nombre del cliente"].dropna().unique()
-    # filter amenities: starting digit/s and point
+    # filter amenities changed logic: digit/s at any point
     amenity_types = [x for x in client_names if re.findall(r"\d+", x)]
 
     # dropdown options: amenity types from `Nombre del cliente`
