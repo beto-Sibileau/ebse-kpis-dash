@@ -817,7 +817,15 @@ def update_modal_val(msg_val, _, is_open_val):
     # specify action by trigger
     if "data-val" in triger_id:
         return (
-            dbc.Container(msg_val),
+            html.Div(
+                msg_val,
+                style={
+                    "maxHeight": "500px",
+                    "maxWidth": "800px",
+                    "overflowY": "scroll",
+                    "overflowX": "scroll",
+                },
+            ),
             not is_open_val,
         )
     else:
@@ -1411,6 +1419,8 @@ def validate_missing(_, df_aprov_in_date):
         df.loc[:, "Número de personas"] = pd.to_numeric(
             df["Número de personas"].str.split().str[1], errors="coerce",
         )
+        # format "Hora incio" column as suggested by Carles
+        df.loc[:, "Hora incio"] = df["Hora incio"].dt.strftime("%Y-%m-%d - T %H:%M")
 
         # users information columns
         user_info_cols = [
@@ -1435,7 +1445,14 @@ def validate_missing(_, df_aprov_in_date):
 
         # display columns appended
         user_info_cols.insert(
-            0, ["Cita ID", "Servei", "Hora incio", "Número de personas"]
+            0,
+            [
+                "Cita ID",
+                "Servei",
+                "Hora incio",
+                "Nombre del cliente",
+                "Número de personas"
+            ]
         )
         df_not_complete = df[is_not_consistent][
             np.concatenate(user_info_cols)
