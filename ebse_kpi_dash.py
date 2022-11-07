@@ -1550,7 +1550,6 @@ def download_validation(_, df_val):
         return None
     else:
         df = pd.read_json(df_val, orient="split")
-        print(df.head())
         df_temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".csv")
         df_temp_file.flush()
         df.to_csv(
@@ -1575,7 +1574,7 @@ def download_validation(_, df_val):
         return (
             # dcc.send_data_frame --> encoding not working apparently
             # use instead dcc.send_file
-            dcc.send_data_frame(df_temp_file.name, filename="missing_data.csv"),
+            dcc.send_file(zip_tf.name, filename="missing_data.zip"),
         )
 
 
