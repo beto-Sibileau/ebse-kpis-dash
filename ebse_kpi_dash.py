@@ -896,7 +896,8 @@ def kpis_calc(df, ini_date, end_date):
 
     # dropdown options: amenity types from `Nombre del cliente`
     dd_amenity_options = [
-        {"label": " ".join(v.split()[1:]), "value": v}
+        # carles suggests amenities full name
+        {"label": v, "value": v}
         # if pd.notnull(v)
         # else {"label": "N/A", "value": "N/A"}
         for v in amenity_types
