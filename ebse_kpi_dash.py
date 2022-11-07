@@ -1550,6 +1550,7 @@ def download_validation(_, df_val):
         return None
     else:
         df = pd.read_json(df_val, orient="split")
+        print(df.head())
         df_temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".csv")
         df_temp_file.flush()
         df.to_csv(
