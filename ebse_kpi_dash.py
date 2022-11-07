@@ -581,6 +581,7 @@ app.layout = html.Div(
                                                 id="btn-dwd-val",
                                                 class_name="ms-auto",
                                             ),
+                                            dcc.Download(id="val-dwd"),
                                         ],
                                         id="div-val-dwd",
                                         style={"display": "none"},
@@ -627,6 +628,8 @@ app.layout = html.Div(
         html.Div(id="df-aprov-dates", style={"display": "none"}),
         # hidden div: share df-cancel-dates in Dash
         html.Div(id="df-cancel-dates", style={"display": "none"}),
+        # hidden div: share df-val in Dash
+        html.Div(id="df-val", style={"display": "none"}),
     ]
 )
 
@@ -1408,6 +1411,7 @@ def download_volunteers_list(_, df_volunteer_dates):
 @app.callback(
     Output("output-data-val", "children"),
     Output("div-val-dwd", "style"),
+    Output("df-val", "children"),
     Input("btn-val", "n_clicks"),
     State("df-aprov-dates", "children"),
     prevent_initial_call=True,
@@ -1428,7 +1432,7 @@ def validate_missing(_, df_aprov_in_date):
                     html.Em("Selected Dates"),
                 ]
             )
-        ], {"display": "none"}
+        ], {"display": "none"}, []
 
     else:
 
@@ -1491,7 +1495,7 @@ def validate_missing(_, df_aprov_in_date):
                         html.Em("fully completed"),
                     ]
                 )
-            ], {"display": "none"}
+            ], {"display": "none"}, []
 
         else:
 
@@ -1520,7 +1524,43 @@ def validate_missing(_, df_aprov_in_date):
                         ),
                     ]
                 ),
-            ], {"display": "inline"}
+            ], {"display": "inline"}, df_not_complete.to_json(orient="split")
+            
+            
+# callback download validation
+@app.callback(
+    Output("output-data-dwd", "children"),
+    Output("val-dwd", "data"),
+    Input("btn-dwd-val", "n_clicks"),
+    State("df-val", "children"),
+    prevent_initial_call=True,
+)
+def download_validation(_, df_val):
+    if not df_val:
+        return (
+            [
+                html.Strong("Data Successfully Validated"),
+            ],
+            None,
+        )
+    else:
+        df = pd.read_json(df_val, orient="split")
+        df_temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".csv")
+        df_temp_file.flush()
+        df.to_csv(
+            df_temp_file.name,
+            index=False,
+            encoding="utf-8-sig",
+            quoting=csv.QUOTE_NONNUMERIC,
+        )
+        return (
+            [
+                html.Strong("Downloaded entries with Missing Information"),
+            ],
+            # dcc.send_data_frame --> encoding not working apparently
+            # use instead dcc.send_file
+            dcc.send_file(df_temp_file.name, filename="missing_data.csv"),
+        )
 
 
 # In[ ]:
