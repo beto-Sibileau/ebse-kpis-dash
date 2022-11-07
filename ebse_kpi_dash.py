@@ -578,7 +578,7 @@ app.layout = html.Div(
                 is_open=False,
                 keyboard=False,
                 backdrop="static",
-                scrollable=False,
+                scrollable=True,
                 size="lg",
                 centered=True,
             ),
@@ -817,15 +817,7 @@ def update_modal_val(msg_val, _, is_open_val):
     # specify action by trigger
     if "data-val" in triger_id:
         return (
-            html.Div(
-                msg_val,
-                style={
-                    "maxHeight": "500px",
-                    "maxWidth": "1000px",
-                    "overflowY": "scroll",
-                    "overflowX": "scroll",
-                },
-            ),
+            dbc.Container(msg_val),
             not is_open_val,
         )
     else:
@@ -1490,7 +1482,8 @@ def validate_missing(_, df_aprov_in_date):
                             bordered=True,
                             hover=True,
                             responsive=True,
-                            size="sm",
+                            size="md",
+                            class_name="me-2",
                             color="warning",
                         ),
                     ]
