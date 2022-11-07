@@ -1478,6 +1478,7 @@ def validate_missing(_, df_aprov_in_date):
                         html.Br(),
                         dbc.Table.from_dataframe(
                             df_not_complete,
+                            id='val-table'
                             striped=True,
                             bordered=True,
                             hover=True,
