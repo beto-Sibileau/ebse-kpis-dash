@@ -14,10 +14,12 @@ import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State
 from datetime import date, datetime, timedelta
 import io
+import os
 import numpy as np
 import pandas as pd
 import re
 import tempfile
+from zipfile import ZipFile
 
 
 # ### App Layout
@@ -1525,6 +1527,15 @@ def validate_missing(_, df_aprov_in_date):
                     ]
                 ),
             ], {"display": "inline"}, df_not_complete.to_json(orient="split")
+
+
+# helper function for closing temporary files - stackoverflow
+def close_tmp_file(tf):
+    try:
+        os.unlink(tf.name)
+        tf.close()
+    except:
+        pass
             
             
 # callback download validation
@@ -1547,10 +1558,23 @@ def download_validation(_, df_val):
             encoding="utf-8-sig",
             quoting=csv.QUOTE_NONNUMERIC,
         )
+        
+        # try with zip
+        zip_tf = tempfile.NamedTemporaryFile(delete=False, suffix=".zip")
+        zf = ZipFile(zip_tf, mode="w")
+        zf.write(df_temp_file.name, "missing_data.csv")
+
+        # close uploaded temporary files
+        zf.close()
+        zip_tf.flush()
+        zip_tf.seek(0)
+        close_tmp_file(df_temp_file.name)
+        close_tmp_file(zip_tf.name)
+        
         return (
             # dcc.send_data_frame --> encoding not working apparently
             # use instead dcc.send_file
-            dcc.send_file(df_temp_file.name, filename="missing_data.csv"),
+            dcc.send_file(zip_tf.name, filename="missing_data.zip"),
         )
 
 
