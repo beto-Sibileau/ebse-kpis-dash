@@ -578,7 +578,7 @@ app.layout = html.Div(
                 is_open=False,
                 keyboard=False,
                 backdrop="static",
-                scrollable=True,
+                scrollable=False,
                 size="lg",
                 centered=True,
             ),
@@ -821,7 +821,7 @@ def update_modal_val(msg_val, _, is_open_val):
                 msg_val,
                 style={
                     "maxHeight": "500px",
-                    "maxWidth": "800px",
+                    "maxWidth": "1000px",
                     "overflowY": "scroll",
                     "overflowX": "scroll",
                 },
