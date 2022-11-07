@@ -1476,9 +1476,13 @@ def validate_missing(_, df_aprov_in_date):
                         html.Code("Cita ID"),
                         html.Em(" below:"),
                         html.Br(),
+                    ]
+                ),
+                html.Div(
+                    [
                         dbc.Table.from_dataframe(
                             df_not_complete,
-                            id='val-table',
+                            id="val-table",
                             striped=True,
                             bordered=True,
                             hover=True,
@@ -1487,7 +1491,7 @@ def validate_missing(_, df_aprov_in_date):
                             color="warning",
                         ),
                     ]
-                )
+                ),
             ]
 
 
