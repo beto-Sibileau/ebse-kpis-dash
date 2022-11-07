@@ -571,7 +571,30 @@ app.layout = html.Div(
                     ),
                     dbc.ModalBody(id="my-modal-body-val"),
                     dbc.ModalFooter(
-                        dbc.Button("Close", id="btn-close-val", class_name="ms-auto")
+                        dbc.Row(
+                            dbc.Col(
+                                html.Div(
+                                    [
+                                        dbc.Button(
+                                            "Download",
+                                            id="btn-dwd-val",
+                                            class_name="ms-auto",
+                                        ),
+                                    ],
+                                    id="div-val-dwd",
+                                    style={"display": "none"},
+                                ),
+                                width="auto",
+                            ),
+                            dbc.Col(
+                                dbc.Button(
+                                    "Close", id="btn-close-val", class_name="ms-auto"
+                                ),
+                                width="auto",
+                            ),
+                            justify="between",
+                            align="center",
+                        )
                     ),
                 ],
                 id="my-modal-val",
@@ -1380,6 +1403,7 @@ def download_volunteers_list(_, df_volunteer_dates):
 # callback validation
 @app.callback(
     Output("output-data-val", "children"),
+    Output("div-val-dwd", "style"),
     Input("btn-val", "n_clicks"),
     State("df-aprov-dates", "children"),
     prevent_initial_call=True,
@@ -1400,7 +1424,7 @@ def validate_missing(_, df_aprov_in_date):
                     html.Em("Selected Dates"),
                 ]
             )
-        ]
+        ], {"display": "none"}
 
     else:
 
@@ -1463,7 +1487,7 @@ def validate_missing(_, df_aprov_in_date):
                         html.Em("fully completed"),
                     ]
                 )
-            ]
+            ], {"display": "none"}
 
         else:
 
@@ -1492,7 +1516,7 @@ def validate_missing(_, df_aprov_in_date):
                         ),
                     ]
                 ),
-            ]
+            ], {"display": "inline"}
 
 
 # In[ ]:
