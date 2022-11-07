@@ -1575,7 +1575,7 @@ def download_validation(_, df_val):
         return (
             # dcc.send_data_frame --> encoding not working apparently
             # use instead dcc.send_file
-            dcc.send_file(zip_tf.name, filename="missing_data.zip"),
+            dcc.send_data_frame(df_temp_file.name, filename="missing_data.csv"),
         )
 
 
