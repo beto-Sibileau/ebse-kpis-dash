@@ -1529,7 +1529,6 @@ def validate_missing(_, df_aprov_in_date):
             
 # callback download validation
 @app.callback(
-    Output("output-data-dwd", "children"),
     Output("val-dwd", "data"),
     Input("btn-dwd-val", "n_clicks"),
     State("df-val", "children"),
@@ -1537,12 +1536,7 @@ def validate_missing(_, df_aprov_in_date):
 )
 def download_validation(_, df_val):
     if not df_val:
-        return (
-            [
-                html.Strong("Data Successfully Validated"),
-            ],
-            None,
-        )
+        return None
     else:
         df = pd.read_json(df_val, orient="split")
         df_temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".csv")
@@ -1554,9 +1548,6 @@ def download_validation(_, df_val):
             quoting=csv.QUOTE_NONNUMERIC,
         )
         return (
-            [
-                html.Strong("Downloaded entries with Missing Information"),
-            ],
             # dcc.send_data_frame --> encoding not working apparently
             # use instead dcc.send_file
             dcc.send_file(df_temp_file.name, filename="missing_data.csv"),
