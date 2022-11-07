@@ -572,26 +572,30 @@ app.layout = html.Div(
                     dbc.ModalBody(id="my-modal-body-val"),
                     dbc.ModalFooter(
                         dbc.Row(
-                            dbc.Col(
-                                html.Div(
-                                    [
-                                        dbc.Button(
-                                            "Download",
-                                            id="btn-dwd-val",
-                                            class_name="ms-auto",
-                                        ),
-                                    ],
-                                    id="div-val-dwd",
-                                    style={"display": "none"},
+                            [
+                                dbc.Col(
+                                    html.Div(
+                                        [
+                                            dbc.Button(
+                                                "Download",
+                                                id="btn-dwd-val",
+                                                class_name="ms-auto",
+                                            ),
+                                        ],
+                                        id="div-val-dwd",
+                                        style={"display": "none"},
+                                    ),
+                                    width="auto",
                                 ),
-                                width="auto",
-                            ),
-                            dbc.Col(
-                                dbc.Button(
-                                    "Close", id="btn-close-val", class_name="ms-auto"
+                                dbc.Col(
+                                    dbc.Button(
+                                        "Close",
+                                        id="btn-close-val",
+                                        class_name="ms-auto",
+                                    ),
+                                    width="auto",
                                 ),
-                                width="auto",
-                            ),
+                            ],
                             justify="between",
                             align="center",
                         )
