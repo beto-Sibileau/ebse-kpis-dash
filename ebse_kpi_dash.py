@@ -1482,8 +1482,7 @@ def validate_missing(_, df_aprov_in_date):
                             bordered=True,
                             hover=True,
                             responsive=True,
-                            size="md",
-                            class_name="me-2",
+                            size="lg",
                             color="warning",
                         ),
                     ]
