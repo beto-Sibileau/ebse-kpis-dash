@@ -9,6 +9,10 @@ __pycache__/
 # C extensions
 *.so
 
+# docker container and vs code folders
+.devcontainer
+.vscode
+
 # Distribution / packaging
 .Python
 build/

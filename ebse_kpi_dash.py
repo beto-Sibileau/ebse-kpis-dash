@@ -14,12 +14,10 @@ import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State
 from datetime import date, datetime, timedelta
 import io
-import os
 import numpy as np
 import pandas as pd
 import re
 import tempfile
-from zipfile import ZipFile
 
 
 # ### App Layout
@@ -33,7 +31,7 @@ bt_up = dcc.Upload(
     dbc.Button(
         html.P(
             ["Click to Upload ", html.Code("csv"), " File"],
-            style={"margin-top": "12px", "fontWeight": "bold",},
+            style={"margin-top": "12px", "fontWeight": "bold"},
         ),
         id="btn",
         class_name="me-1",
@@ -47,7 +45,7 @@ bt_up = dcc.Upload(
 bt_miss = dbc.Button(
     html.P(
         ["Click to Validate ", html.Code("csv"), " File"],
-        style={"margin-top": "12px", "fontWeight": "bold",},
+        style={"margin-top": "12px", "fontWeight": "bold"},
     ),
     id="btn-val",
     class_name="me-1",
@@ -90,7 +88,7 @@ appoint_row = dbc.Container(
                         html.Div(
                             id="uploading-state",
                             className="output-uploading-state",
-                            style={"color": "DarkGreen", "textAlign": "center",},
+                            style={"color": "DarkGreen", "textAlign": "center"},
                         ),
                     ]
                 ),
@@ -112,7 +110,7 @@ appoint_row = dbc.Container(
                         html.Div(
                             id="validation-state",
                             className="output-validate-state",
-                            style={"color": "RoyalBlue", "textAlign": "center",},
+                            style={"color": "RoyalBlue", "textAlign": "center"},
                         ),
                     ]
                 ),
@@ -211,7 +209,7 @@ cards_row_user = dbc.Container(
 # In[ ]:
 
 # dbc select: user type
-dd_user = dbc.Select(id="my-user-dd", options=[], value="",)
+dd_user = dbc.Select(id="my-user-dd", options=[], value="")
 
 # dbc dropdown and 4 cards deck: user type
 cards_row_type = dbc.Container(
@@ -238,7 +236,7 @@ cards_row_type = dbc.Container(
             ],
             justify="start",
             align="start",
-            style={"paddingLeft": "25px", "marginBottom": "30px",},
+            style={"paddingLeft": "25px", "marginBottom": "30px"},
         ),
         dbc.Row(
             [
@@ -258,7 +256,7 @@ cards_row_type = dbc.Container(
 
 
 # dbc select: amenities
-dd_amenity = dbc.Select(id="my-amenity-dd", options=[], value="",)
+dd_amenity = dbc.Select(id="my-amenity-dd", options=[], value="")
 
 # dbc dropdown and 3-cards two rows deck: amenities
 amenity_row_type = dbc.Container(
@@ -285,7 +283,7 @@ amenity_row_type = dbc.Container(
             ],
             justify="start",
             align="start",
-            style={"paddingLeft": "25px", "marginBottom": "30px",},
+            style={"paddingLeft": "25px", "marginBottom": "30px"},
         ),
         dbc.Row(
             [
@@ -323,13 +321,13 @@ amenity_row_type = dbc.Container(
 
 
 # dbc select: volunteers
-dd_volunteer = dbc.Select(id="my-volunteer-dd", options=[], value="",)
+dd_volunteer = dbc.Select(id="my-volunteer-dd", options=[], value="")
 
 # dbc button: download volunteers data
 bt_dwd = dbc.Button(
     html.P(
         ["Click to Download ", html.Code("csv"), " File"],
-        style={"margin-top": "12px", "fontWeight": "bold",},
+        style={"margin-top": "12px", "fontWeight": "bold"},
     ),
     id="btn-dwd",
     class_name="me-1",
@@ -362,7 +360,7 @@ card_row_volunteer = dbc.Container(
             ],
             justify="start",
             align="start",
-            style={"paddingLeft": "25px", "marginBottom": "30px",},
+            style={"paddingLeft": "25px", "marginBottom": "30px"},
         ),
         dbc.Row(
             [
@@ -438,7 +436,10 @@ app.layout = html.Div(
             },
         ),
         # div appointments row
-        html.Div([appoint_row], style={"paddingTop": "20px",},),
+        html.Div(
+            [appoint_row],
+            style={"paddingTop": "20px"},
+        ),
         html.Hr(
             style={
                 "color": "DarkRed",
@@ -449,7 +450,10 @@ app.layout = html.Div(
         ),
         # div 3-cards row
         dcc.Loading(
-            children=html.Div([cards_row], style={"paddingTop": "40px",},),
+            children=html.Div(
+                [cards_row],
+                style={"paddingTop": "40px"},
+            ),
             id="loading-kpis",
             type="circle",
             fullscreen=True,
@@ -464,7 +468,8 @@ app.layout = html.Div(
         ),
         # div 3-cards row: user
         html.Div(
-            [cards_row_user], style={"paddingTop": "30px", "margin-bottom": "0",},
+            [cards_row_user],
+            style={"paddingTop": "30px", "margin-bottom": "0"},
         ),
         html.Hr(
             style={
@@ -477,7 +482,8 @@ app.layout = html.Div(
         # div 4-cards row: user type
         dcc.Loading(
             children=html.Div(
-                [cards_row_type], style={"paddingTop": "0", "margin-bottom": "0",},
+                [cards_row_type],
+                style={"paddingTop": "0", "margin-bottom": "0"},
             ),
             id="loading-kpis-user-type",
             type="circle",
@@ -494,7 +500,8 @@ app.layout = html.Div(
         # div 3-cards 2-row: amenities
         dcc.Loading(
             children=html.Div(
-                [amenity_row_type], style={"paddingTop": "0", "margin-bottom": "0",},
+                [amenity_row_type],
+                style={"paddingTop": "0", "margin-bottom": "0"},
             ),
             id="loading-kpis-amenity",
             type="circle",
@@ -512,7 +519,7 @@ app.layout = html.Div(
         dcc.Loading(
             children=html.Div(
                 [card_row_volunteer],
-                style={"paddingTop": "0", "margin-bottom": "40px",},
+                style={"paddingTop": "0", "margin-bottom": "40px"},
             ),
             id="loading-kpi-volunteer",
             type="circle",
@@ -686,7 +693,7 @@ def read_csv_file(contents, filename, date):
         else:
             # Warn user hasn't uploaded a csv file
             return (
-                ["Appointments must be a ", html.Code("csv"), " File",],
+                ["Appointments must be a ", html.Code("csv"), " File"],
                 {},
             )
     except Exception as e:
@@ -909,16 +916,14 @@ def kpis_calc(df, ini_date, end_date):
         )
 
     # eliminate duplicated `Cita ID` (keep first)
-    dupli_in_dates = df_in_dates.duplicated(subset="Cita ID", keep="first",)
-    df_in_dates.drop(
-        df_in_dates[dupli_in_dates].index, inplace=True,
-    )
+    dupli_in_dates = df_in_dates.duplicated(subset="Cita ID", keep="first")
+    df_in_dates.drop(df_in_dates[dupli_in_dates].index, inplace=True)
 
     # filter `passejades` within dates (AND exclude maintenance key words)
     servei_key = "Servei.str.contains('tricicle', case=False)"
     maintain_key = "Servei.str.contains('trasllat|manteniment', case=False)"
     df_passeig_in_dates = df_in_dates.query(
-        f"{servei_key}&~{maintain_key}", engine="python",
+        f"{servei_key}&~{maintain_key}", engine="python"
     ).reset_index(drop=True)
 
     # client names: `Nombre del cliente`
@@ -962,13 +967,13 @@ def kpis_calc(df, ini_date, end_date):
 
     # `passejades` kpi_1: Aproved Number
     query_kpi_1 = "`Número de personas`.str.contains('aprobado', case=False)"
-    df_kpi_1 = df_passeig_in_dates.query(query_kpi_1, engine="python",).reset_index(
+    df_kpi_1 = df_passeig_in_dates.query(query_kpi_1, engine="python").reset_index(
         drop=True
     )
 
     # `passejades` kpi_2: Cancelled Number
     query_kpi_2 = "`Número de personas`.str.contains('cancelada', case=False)"
-    df_kpi_2 = df_passeig_in_dates.query(query_kpi_2, engine="python",).reset_index(
+    df_kpi_2 = df_passeig_in_dates.query(query_kpi_2, engine="python").reset_index(
         drop=True
     )
 
@@ -1017,7 +1022,7 @@ def kpis_calc(df, ini_date, end_date):
     dd_people_options = [{"label": v, "value": v} for v in people_types]
 
     # filter aproved for volunteers list
-    df_volunteer_dates = df_in_dates.query(query_kpi_1, engine="python",).reset_index(
+    df_volunteer_dates = df_in_dates.query(query_kpi_1, engine="python").reset_index(
         drop=True
     )
     # replace names if empty: "N/A"
@@ -1032,7 +1037,7 @@ def kpis_calc(df, ini_date, end_date):
     # aggregate df_volunteer_dates for volunteers list
     df_volunteer_list = (
         df_volunteer_dates.groupby("Voluntari/a", sort=False)
-        .agg({"Hours": "sum", "Servei": "last", "Hora incio": "last",})
+        .agg({"Hours": "sum", "Servei": "last", "Hora incio": "last"})
         .reset_index()
         .sort_values("Hours", ascending=False, ignore_index=True)
         .rename(columns={"Servei": "Last Servei", "Hora incio": "Last Date"})
@@ -1225,14 +1230,14 @@ def kpis_calc_amenity(df_aprov, df_cancel, amenity):
 
     # json to dataframe: aproved within dates
     df_aprov = pd.read_json(
-        df_aprov, orient="split", convert_dates=["Hora incio", "Hora final"],
+        df_aprov, orient="split", convert_dates=["Hora incio", "Hora final"]
     )
     # capture empty as "N/A"
     df_aprov["Nombre del cliente"].fillna(value="N/A", inplace=True)
 
     # json to dataframe: cancelled within dates
     df_cancel = pd.read_json(
-        df_cancel, orient="split", convert_dates=["Hora incio", "Hora final"],
+        df_cancel, orient="split", convert_dates=["Hora incio", "Hora final"]
     )
     # capture empty as "N/A"
     df_cancel["Nombre del cliente"].fillna(value="N/A", inplace=True)
@@ -1421,20 +1426,24 @@ def download_volunteers_list(_, df_volunteer_dates):
 def validate_missing(_, df_aprov_in_date):
     if not df_aprov_in_date:
 
-        return [
-            html.P(
-                [
-                    html.Strong("No Data"),
-                    html.Br(),
-                    "1) Please Upload ",
-                    html.Code("csv"),
-                    " File",
-                    html.Br(),
-                    "2) Please Verify ",
-                    html.Em("Selected Dates"),
-                ]
-            )
-        ], {"display": "none"}, []
+        return (
+            [
+                html.P(
+                    [
+                        html.Strong("No Data"),
+                        html.Br(),
+                        "1) Please Upload ",
+                        html.Code("csv"),
+                        " File",
+                        html.Br(),
+                        "2) Please Verify ",
+                        html.Em("Selected Dates"),
+                    ]
+                )
+            ],
+            {"display": "none"},
+            [],
+        )
 
     else:
 
@@ -1443,14 +1452,14 @@ def validate_missing(_, df_aprov_in_date):
         )
         # split number of aproved users
         df.loc[:, "Número de personas"] = pd.to_numeric(
-            df["Número de personas"].str.split().str[1], errors="coerce",
+            df["Número de personas"].str.split().str[1], errors="coerce"
         )
         # format "Hora incio" column as suggested by Carles
         df.loc[:, "Hora incio"] = df["Hora incio"].dt.strftime("%Y-%m-%d - T %H:%M")
 
         # users information columns
         user_info_cols = [
-            [f"Tipologia P{i}", f"Gènere P{i}", f"Edat P{i}",] for i in range(1, 5)
+            [f"Tipologia P{i}", f"Gènere P{i}", f"Edat P{i}"] for i in range(1, 5)
         ]
         # filter nulls matrix
         null_matrix = np.array(
@@ -1477,8 +1486,8 @@ def validate_missing(_, df_aprov_in_date):
                 "Servei",
                 "Hora incio",
                 "Nombre del cliente",
-                "Número de personas"
-            ]
+                "Número de personas",
+            ],
         )
         df_not_complete = df[is_not_consistent][
             np.concatenate(user_info_cols)
@@ -1486,58 +1495,57 @@ def validate_missing(_, df_aprov_in_date):
 
         if df_not_complete.empty:
 
-            return [
-                html.P(
-                    [
-                        html.Strong("Successfully Validated"),
-                        html.Br(),
-                        "All ",
-                        html.Code("passejades aprovades"),
-                        " are ",
-                        html.Em("fully completed"),
-                    ]
-                )
-            ], {"display": "none"}, []
+            return (
+                [
+                    html.P(
+                        [
+                            html.Strong("Successfully Validated"),
+                            html.Br(),
+                            "All ",
+                            html.Code("passejades aprovades"),
+                            " are ",
+                            html.Em("fully completed"),
+                        ]
+                    )
+                ],
+                {"display": "none"},
+                [],
+            )
 
         else:
 
-            return [
-                html.P(
-                    [
-                        html.Strong("Missing Information"),
-                        html.Br(),
-                        "Check ",
-                        html.Code("Cita ID"),
-                        html.Em(" below:"),
-                        html.Br(),
-                    ]
-                ),
-                html.Div(
-                    [
-                        dbc.Table.from_dataframe(
-                            df_not_complete,
-                            id="val-table",
-                            striped=True,
-                            bordered=True,
-                            hover=True,
-                            responsive=True,
-                            size="lg",
-                            color="warning",
-                        ),
-                    ]
-                ),
-            ], {"display": "inline"}, df_not_complete.to_json(orient="split")
+            return (
+                [
+                    html.P(
+                        [
+                            html.Strong("Missing Information"),
+                            html.Br(),
+                            "Check ",
+                            html.Code("Cita ID"),
+                            html.Em(" below:"),
+                            html.Br(),
+                        ]
+                    ),
+                    html.Div(
+                        [
+                            dbc.Table.from_dataframe(
+                                df_not_complete,
+                                id="val-table",
+                                striped=True,
+                                bordered=True,
+                                hover=True,
+                                responsive=True,
+                                size="lg",
+                                color="warning",
+                            ),
+                        ]
+                    ),
+                ],
+                {"display": "inline"},
+                df_not_complete.to_json(orient="split"),
+            )
 
 
-# helper function for closing temporary files - stackoverflow
-def close_tmp_file(tf):
-    try:
-        os.unlink(tf.name)
-        tf.close()
-    except:
-        pass
-            
-            
 # callback download validation
 @app.callback(
     Output("val-dwd", "data"),
@@ -1549,32 +1557,15 @@ def download_validation(_, df_val):
     if not df_val:
         return None
     else:
+
         df = pd.read_json(df_val, orient="split")
-        df_temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".csv")
-        df_temp_file.flush()
-        df.to_csv(
-            df_temp_file.name,
+
+        return dcc.send_data_frame(
+            df.to_csv,
             index=False,
             encoding="utf-8-sig",
             quoting=csv.QUOTE_NONNUMERIC,
-        )
-        
-        # try with zip
-        zip_tf = tempfile.NamedTemporaryFile(delete=False, suffix=".zip")
-        zf = ZipFile(zip_tf, mode="w")
-        zf.write(df_temp_file.name, "missing_data.csv")
-
-        # close uploaded temporary files
-        zf.close()
-        zip_tf.flush()
-        zip_tf.seek(0)
-        close_tmp_file(df_temp_file.name)
-        close_tmp_file(zip_tf.name)
-        
-        return (
-            # dcc.send_data_frame --> encoding not working apparently
-            # use instead dcc.send_file
-            dcc.send_file(zip_tf.name, filename="missing_data.zip"),
+            filename="missing_data.csv",
         )
 
 
