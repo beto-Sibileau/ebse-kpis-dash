@@ -3,4 +3,3 @@ dash-bootstrap-components
 gunicorn
 numpy
 pandas
-Werkzeug
