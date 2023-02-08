@@ -76,7 +76,7 @@ appoint_row = dbc.Container(
                 html.Div(
                     [
                         html.P(
-                            "Load Appointments",
+                            "Carregar dades",
                             style={
                                 "fontWeight": "bold",
                                 "fontSize": "18px",
@@ -98,7 +98,7 @@ appoint_row = dbc.Container(
                 html.Div(
                     [
                         html.P(
-                            "Check Missing Data",
+                            "Validar dades",
                             style={
                                 "fontWeight": "bold",
                                 "fontSize": "18px",
@@ -120,7 +120,7 @@ appoint_row = dbc.Container(
                 html.Div(
                     [
                         html.P(
-                            "Click to Select Dates",
+                            "Seleccionar Dates",
                             style={
                                 "fontWeight": "bold",
                                 "fontSize": "18px",
@@ -220,7 +220,7 @@ cards_row_type = dbc.Container(
                     html.Div(
                         [
                             html.P(
-                                "Select User Type",
+                                "Seleccionar tipologia de passatgers",
                                 style={
                                     "fontWeight": "bold",
                                     "fontSize": "18px",
@@ -267,7 +267,7 @@ amenity_row_type = dbc.Container(
                     html.Div(
                         [
                             html.P(
-                                "Select Amenity",
+                                "Seleccionar equipament",
                                 style={
                                     "fontWeight": "bold",
                                     "fontSize": "18px",
@@ -344,7 +344,7 @@ card_row_volunteer = dbc.Container(
                     html.Div(
                         [
                             html.P(
-                                "Select Volunteer",
+                                "Seleccionar voluntariat",
                                 style={
                                     "fontWeight": "bold",
                                     "fontSize": "18px",
@@ -931,18 +931,9 @@ def kpis_calc(df, ini_date, end_date):
     # filter amenities changed logic: digit/s at any point
     amenity_types = [x for x in client_names if re.findall(r"\d+", x)]
 
-    # dropdown options: amenity types from `Nombre del cliente`
-    dd_amenity_options = [
-        # carles suggests amenities full name
-        {"label": v, "value": v}
-        # if pd.notnull(v)
-        # else {"label": "N/A", "value": "N/A"}
-        for v in amenity_types
-    ]
-
     # add N/A if empty clients
     if df_passeig_in_dates["Nombre del cliente"].isnull().any():
-        dd_amenity_options.append({"label": "N/A", "value": "N/A"})
+        amenity_types.append("N/A")
 
     # replace client names as `Usuàries Particulars` if any
     if len(amenity_types) < len(client_names):
@@ -955,8 +946,7 @@ def kpis_calc(df, ini_date, end_date):
         if filter_particulars.any():
             private_user = pd.Series(amenity_types)[filter_particulars].values[0]
         else:
-            private_user = "Usuàries Particulars"
-            dd_amenity_options.append({"label": private_user, "value": private_user})
+            amenity_types.append("Usuàries Particulars")
 
         # client names to replace
         clients_map = {
@@ -1019,7 +1009,9 @@ def kpis_calc(df, ini_date, end_date):
     )
 
     # dropdown options: people types
-    dd_people_options = [{"label": v, "value": v} for v in people_types]
+    dd_people_options = [
+        {"label": v, "value": v} for v in sorted(people_types, key=str.lower)
+    ]
 
     # filter aproved for volunteers list
     df_volunteer_dates = df_in_dates.query(query_kpi_1, engine="python").reset_index(
@@ -1054,7 +1046,9 @@ def kpis_calc(df, ini_date, end_date):
     # volunteers: `Voluntari/a`
     volunteer_names = df_volunteer_list["Voluntari/a"].sort_values().values
     # dropdown options: volunteer names
-    dd_volunteer_options = [{"label": v, "value": v} for v in volunteer_names]
+    dd_volunteer_options = [
+        {"label": v, "value": v} for v in sorted(volunteer_names, key=str.lower)
+    ]
 
     # return kpis 1 to 6
     return (
@@ -1076,7 +1070,8 @@ def kpis_calc(df, ini_date, end_date):
         "",
         # csv to json: sharing data within Dash
         df_kpi_1.to_json(orient="split"),
-        dd_amenity_options,
+        # dropdown amenities: carles suggests full `Nombre del cliente` sorted
+        [{"label": v, "value": v} for v in sorted(amenity_types, key=str.lower)],
         "",
         # csv to json: sharing data within Dash
         df_kpi_2.to_json(orient="split"),
