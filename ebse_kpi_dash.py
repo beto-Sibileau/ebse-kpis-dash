@@ -30,7 +30,7 @@ import tempfile
 bt_up = dcc.Upload(
     dbc.Button(
         html.P(
-            ["Click to Upload ", html.Code("csv"), " File"],
+            ["Clicar per carregar ", html.Code("csv")],
             style={"margin-top": "12px", "fontWeight": "bold"},
         ),
         id="btn",
@@ -44,7 +44,7 @@ bt_up = dcc.Upload(
 # dbc button: missing data
 bt_miss = dbc.Button(
     html.P(
-        ["Click to Validate ", html.Code("csv"), " File"],
+        ["Clicar per validar ", html.Code("csv")],
         style={"margin-top": "12px", "fontWeight": "bold"},
     ),
     id="btn-val",
@@ -326,7 +326,7 @@ dd_volunteer = dbc.Select(id="my-volunteer-dd", options=[], value="")
 # dbc button: download volunteers data
 bt_dwd = dbc.Button(
     html.P(
-        ["Click to Download ", html.Code("csv"), " File"],
+        ["Clicar per descarregar ", html.Code("csv")],
         style={"margin-top": "12px", "fontWeight": "bold"},
     ),
     id="btn-dwd",
@@ -369,7 +369,7 @@ card_row_volunteer = dbc.Container(
                     html.Div(
                         [
                             html.P(
-                                "Full Volunteers List",
+                                "Llistat d’hores de dedicació del voluntariat",
                                 style={
                                     "fontWeight": "bold",
                                     "fontSize": "18px",
