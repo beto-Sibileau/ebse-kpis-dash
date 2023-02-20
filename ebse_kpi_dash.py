@@ -769,7 +769,6 @@ def read_csv_file(contents, filename, date):
     prevent_initial_call=True,
 )
 def wrap_csv_read(loaded_file, file_name, file_last_mod):
-
     # coded as proposed in Dash Doc
     # callback sees changes in content only (eg: not same content with different filename)
     if loaded_file is not None:
@@ -791,7 +790,6 @@ def wrap_csv_read(loaded_file, file_name, file_last_mod):
     prevent_initial_call=True,
 )
 def update_modal(msg_in, click_close, is_open):
-
     # identify callback context
     triger_id = callback_context.triggered[0]["prop_id"].split(".")[0]
 
@@ -820,7 +818,6 @@ def update_modal(msg_in, click_close, is_open):
     prevent_initial_call=True,
 )
 def update_modal_dwd(msg_dwd, _, is_open_dwd):
-
     # identify callback context
     triger_id = callback_context.triggered[0]["prop_id"].split(".")[0]
 
@@ -849,7 +846,6 @@ def update_modal_dwd(msg_dwd, _, is_open_dwd):
     prevent_initial_call=True,
 )
 def update_modal_val(msg_val, _, is_open_val):
-
     # identify callback context
     triger_id = callback_context.triggered[0]["prop_id"].split(".")[0]
 
@@ -871,7 +867,6 @@ def update_modal_val(msg_val, _, is_open_val):
 
 # appointments table: filter, calculate
 def kpis_calc(df, ini_date, end_date):
-
     # json to dataframe
     df = pd.read_json(df, orient="split")
 
@@ -1108,7 +1103,6 @@ def kpis_calc(df, ini_date, end_date):
     prevent_initial_call=True,
 )
 def update_kpis(start_date, end_date, _, app_df):
-
     # file not available or inconsistent dates
     if not app_df or (start_date > end_date):
         return (
@@ -1139,7 +1133,6 @@ def update_kpis(start_date, end_date, _, app_df):
 
 # filtered aproved `passejades` within dates: user type calculations
 def kpis_calc_user_type(df_filtered, user_type):
-
     # json to dataframe
     df = pd.read_json(df_filtered, orient="split")
 
@@ -1222,7 +1215,6 @@ def update_kpis_user_type(user_type, df_in_date):
 
 # filtered `passejades` within dates: amenity calculations
 def kpis_calc_amenity(df_aprov, df_cancel, amenity):
-
     # json to dataframe: aproved within dates
     df_aprov = pd.read_json(
         df_aprov, orient="split", convert_dates=["Hora incio", "Hora final"]
@@ -1326,7 +1318,6 @@ def update_kpis_amenity(amenity, df_aprov_in_date, df_cancel_in_date):
 
 # filter aggregated volunteer list within dates
 def kpi_calc_volunteer(df_volunteer_list, volunteer):
-
     # json to dataframe
     df = pd.read_json(df_volunteer_list, orient="split")
 
@@ -1420,7 +1411,6 @@ def download_volunteers_list(_, df_volunteer_dates):
 )
 def validate_missing(_, df_aprov_in_date):
     if not df_aprov_in_date:
-
         return (
             [
                 html.P(
@@ -1441,7 +1431,6 @@ def validate_missing(_, df_aprov_in_date):
         )
 
     else:
-
         df = pd.read_json(
             df_aprov_in_date, orient="split", convert_dates=["Hora incio"]
         )
@@ -1452,25 +1441,20 @@ def validate_missing(_, df_aprov_in_date):
         # format "Hora incio" column as suggested by Carles
         df.loc[:, "Hora incio"] = df["Hora incio"].dt.strftime("%Y-%m-%d - T %H:%M")
 
+        # validation per user information columns
+        user_tipo_cols = (
+            df[[f"Tipologia P{i}" for i in range(1, 5)]].notnull().sum(axis="columns")
+        )
+        user_gend_cols = (
+            df[[f"Gènere P{i}" for i in range(1, 5)]].notnull().sum(axis="columns")
+        )
+        user_age_cols = (
+            df[[f"Edat P{i}" for i in range(1, 5)]].notnull().sum(axis="columns")
+        )
+
         # users information columns
         user_info_cols = [
             [f"Tipologia P{i}", f"Gènere P{i}", f"Edat P{i}"] for i in range(1, 5)
-        ]
-        # filter nulls matrix
-        null_matrix = np.array(
-            [df[elem].notnull().all(axis="columns").values for elem in user_info_cols]
-        )
-
-        # # filter incomplete accordingly --> below, inconsistent preferred
-        # is_not_complete = [
-        #     not null_matrix[:elem, i].all()
-        #     for i, elem in enumerate(df["Número de personas"].values)
-        # ]
-
-        # filter inconsistent accordingly
-        is_not_consistent = [
-            null_matrix[:, i].sum() != elem
-            for i, elem in enumerate(df["Número de personas"].values)
         ]
 
         # display columns appended
@@ -1484,12 +1468,23 @@ def validate_missing(_, df_aprov_in_date):
                 "Número de personas",
             ],
         )
-        df_not_complete = df[is_not_consistent][
+
+        df_tipo_not_complete = df[user_tipo_cols != df["Número de personas"]][
+            np.concatenate(user_info_cols)
+        ].reset_index(drop=True)
+        df_gend_not_complete = df[user_gend_cols != df["Número de personas"]][
+            np.concatenate(user_info_cols)
+        ].reset_index(drop=True)
+        df_age_not_complete = df[user_age_cols != df["Número de personas"]][
             np.concatenate(user_info_cols)
         ].reset_index(drop=True)
 
-        if df_not_complete.empty:
+        df_output = pd.concat(
+            [df_tipo_not_complete, df_gend_not_complete, df_age_not_complete],
+            ignore_index=True,
+        ).drop_duplicates()
 
+        if df_output.empty:
             return (
                 [
                     html.P(
@@ -1508,7 +1503,6 @@ def validate_missing(_, df_aprov_in_date):
             )
 
         else:
-
             return (
                 [
                     html.P(
@@ -1524,7 +1518,7 @@ def validate_missing(_, df_aprov_in_date):
                     html.Div(
                         [
                             dbc.Table.from_dataframe(
-                                df_not_complete,
+                                df_output,
                                 id="val-table",
                                 striped=True,
                                 bordered=True,
@@ -1537,7 +1531,7 @@ def validate_missing(_, df_aprov_in_date):
                     ),
                 ],
                 {"display": "inline"},
-                df_not_complete.to_json(orient="split"),
+                df_output.to_json(orient="split"),
             )
 
 
@@ -1552,7 +1546,6 @@ def download_validation(_, df_val):
     if not df_val:
         return None
     else:
-
         df = pd.read_json(df_val, orient="split")
 
         return dcc.send_data_frame(
