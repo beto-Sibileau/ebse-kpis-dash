@@ -53,16 +53,20 @@ bt_miss = dbc.Button(
     color="primary",
 )
 
+# add actual year
+current_year = datetime.now().year
 # dash date picker
 date_picker = dcc.DatePickerRange(
     id="my-date-picker-range",
     min_date_allowed=date(2016, 1, 1),
     max_date_allowed=date(2030, 12, 31),
     # initial_visible_month=date(2022, 1, 1),
-    start_date=date(2022, 1, 1),
-    end_date=date(2022, 12, 31),
+    start_date=date(current_year, 1, 1),
+    end_date=date(current_year, 12, 31),
     display_format="Do MMM YYYY",
     style={"fontSize": 20},
+    persistence=True,
+    persistence_type="session",
 )
 
 # button: execute KPIs
@@ -1434,67 +1438,32 @@ def validate_missing(_, df_aprov_in_date):
         df = pd.read_json(
             df_aprov_in_date, orient="split", convert_dates=["Hora incio"]
         )
-        # split number of aproved users
-        df.loc[:, "Número de personas"] = pd.to_numeric(
-            df["Número de personas"].str.split().str[1], errors="coerce"
-        )
-        # format "Hora incio" column as suggested by Carles
-        df.loc[:, "Hora incio"] = df["Hora incio"].dt.strftime("%Y-%m-%d - T %H:%M")
 
-        # validation per user information columns
-        user_tipo_cols = (
-            df[[f"Tipologia P{i}" for i in range(1, 5)]].notnull().sum(axis="columns")
-        )
-        user_gend_cols = (
-            df[[f"Gènere P{i}" for i in range(1, 5)]].notnull().sum(axis="columns")
-        )
-        user_age_cols = (
-            df[[f"Edat P{i}" for i in range(1, 5)]].notnull().sum(axis="columns")
-        )
-
-        # users information columns
-        user_info_cols = [
-            [f"Tipologia P{i}", f"Gènere P{i}", f"Edat P{i}"] for i in range(1, 5)
-        ]
-
-        # display columns appended
-        user_info_cols.insert(
-            0,
-            [
-                "Cita ID",
-                "Servei",
-                "Hora incio",
-                "Nombre del cliente",
-                "Número de personas",
-            ],
-        )
-
-        df_tipo_not_complete = df[user_tipo_cols != df["Número de personas"]][
-            np.concatenate(user_info_cols)
-        ].reset_index(drop=True)
-        df_gend_not_complete = df[user_gend_cols != df["Número de personas"]][
-            np.concatenate(user_info_cols)
-        ].reset_index(drop=True)
-        df_age_not_complete = df[user_age_cols != df["Número de personas"]][
-            np.concatenate(user_info_cols)
-        ].reset_index(drop=True)
-
-        df_output = pd.concat(
-            [df_tipo_not_complete, df_gend_not_complete, df_age_not_complete],
-            ignore_index=True,
-        ).drop_duplicates()
-
-        if df_output.empty:
+        if df.empty:
             return (
                 [
                     html.P(
                         [
-                            html.Strong("Successfully Validated"),
+                            html.Strong("Missing Information"),
                             html.Br(),
-                            "All ",
+                            "There are no ",
                             html.Code("passejades aprovades"),
-                            " are ",
-                            html.Em("fully completed"),
+                            html.Br(),
+                            "1) Check if any ",
+                            html.Code("passejades"),
+                            ": ",
+                            html.Code("Servei"),
+                            " contains the word ",
+                            html.Code("tricicle"),
+                            " and not ",
+                            html.Code("trasllat"),
+                            " or ",
+                            html.Code("manteniment"),
+                            html.Br(),
+                            "2) Check if any ",
+                            html.Code("passejades"),
+                            " contains ",
+                            html.Code("Estat Aprobado"),
                         ]
                     )
                 ],
@@ -1503,36 +1472,107 @@ def validate_missing(_, df_aprov_in_date):
             )
 
         else:
-            return (
-                [
-                    html.P(
-                        [
-                            html.Strong("Missing Information"),
-                            html.Br(),
-                            "Check ",
-                            html.Code("Cita ID"),
-                            html.Em(" below:"),
-                            html.Br(),
-                        ]
-                    ),
-                    html.Div(
-                        [
-                            dbc.Table.from_dataframe(
-                                df_output,
-                                id="val-table",
-                                striped=True,
-                                bordered=True,
-                                hover=True,
-                                responsive=True,
-                                size="lg",
-                                color="warning",
-                            ),
-                        ]
-                    ),
-                ],
-                {"display": "inline"},
-                df_output.to_json(orient="split"),
+            # split number of aproved users
+            df.loc[:, "Número de personas"] = pd.to_numeric(
+                df["Número de personas"].str.split().str[1], errors="coerce"
             )
+            # format "Hora incio" column as suggested by Carles
+            df.loc[:, "Hora incio"] = df["Hora incio"].dt.strftime("%Y-%m-%d - T %H:%M")
+
+            # validation per user information columns
+            user_tipo_cols = (
+                df[[f"Tipologia P{i}" for i in range(1, 5)]]
+                .notnull()
+                .sum(axis="columns")
+            )
+            user_gend_cols = (
+                df[[f"Gènere P{i}" for i in range(1, 5)]].notnull().sum(axis="columns")
+            )
+            user_age_cols = (
+                df[[f"Edat P{i}" for i in range(1, 5)]].notnull().sum(axis="columns")
+            )
+
+            # users information columns
+            user_info_cols = [
+                [f"Tipologia P{i}", f"Gènere P{i}", f"Edat P{i}"] for i in range(1, 5)
+            ]
+
+            # display columns appended
+            user_info_cols.insert(
+                0,
+                [
+                    "Cita ID",
+                    "Servei",
+                    "Hora incio",
+                    "Nombre del cliente",
+                    "Número de personas",
+                ],
+            )
+
+            df_tipo_not_complete = df[user_tipo_cols != df["Número de personas"]][
+                np.concatenate(user_info_cols)
+            ].reset_index(drop=True)
+            df_gend_not_complete = df[user_gend_cols != df["Número de personas"]][
+                np.concatenate(user_info_cols)
+            ].reset_index(drop=True)
+            df_age_not_complete = df[user_age_cols != df["Número de personas"]][
+                np.concatenate(user_info_cols)
+            ].reset_index(drop=True)
+
+            df_output = pd.concat(
+                [df_tipo_not_complete, df_gend_not_complete, df_age_not_complete],
+                ignore_index=True,
+            ).drop_duplicates()
+
+            if df_output.empty:
+                return (
+                    [
+                        html.P(
+                            [
+                                html.Strong("Successfully Validated"),
+                                html.Br(),
+                                "All ",
+                                html.Code("passejades aprovades"),
+                                " are ",
+                                html.Em("fully completed"),
+                            ]
+                        )
+                    ],
+                    {"display": "none"},
+                    [],
+                )
+
+            else:
+                return (
+                    [
+                        html.P(
+                            [
+                                html.Strong("Missing Information"),
+                                html.Br(),
+                                "Check ",
+                                html.Code("Cita ID"),
+                                html.Em(" below:"),
+                                html.Br(),
+                            ]
+                        ),
+                        html.Div(
+                            [
+                                dbc.Table.from_dataframe(
+                                    df_output,
+                                    id="val-table",
+                                    striped=True,
+                                    bordered=True,
+                                    hover=True,
+                                    responsive=True,
+                                    size="lg",
+                                    color="warning",
+                                ),
+                            ]
+                        ),
+                    ],
+                    {"display": "inline"},
+                    df_output.to_json(orient="split"),
+                )
 
 
 # callback download validation
