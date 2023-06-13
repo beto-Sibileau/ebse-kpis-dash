@@ -875,12 +875,8 @@ def kpis_calc(df, ini_date, end_date):
     df = pd.read_json(df, orient="split")
 
     # transform datetimes
-    df.loc[:, "Hora incio"] = pd.to_datetime(
-        df["Hora incio"], format="%d de %B de %Y %H:%M"
-    )
-    df.loc[:, "Hora final"] = pd.to_datetime(
-        df["Hora final"], format="%d de %B de %Y %H:%M"
-    )
+    df["Hora incio"] = pd.to_datetime(df["Hora incio"], format="%d de %B de %Y %H:%M")
+    df["Hora final"] = pd.to_datetime(df["Hora final"], format="%d de %B de %Y %H:%M")
 
     # cast ini_date
     ini_date = pd.Timestamp(date.fromisoformat(ini_date))
@@ -946,6 +942,7 @@ def kpis_calc(df, ini_date, end_date):
         if filter_particulars.any():
             private_user = pd.Series(amenity_types)[filter_particulars].values[0]
         else:
+            private_user = "Usuàries Particulars"
             amenity_types.append("Usuàries Particulars")
 
         # client names to replace
