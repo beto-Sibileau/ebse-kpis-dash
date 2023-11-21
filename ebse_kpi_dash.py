@@ -1376,6 +1376,7 @@ def download_volunteers_list(_, df_volunteer_dates):
         )
     else:
         df = pd.read_json(df_volunteer_dates, orient="split")
+        df["Last Date"] = pd.to_datetime(df["Last Date"], unit="ms").dt.strftime("%Y-%m-%d")
         df_temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".csv")
         df_temp_file.flush()
         df.to_csv(
@@ -1585,6 +1586,7 @@ def download_validation(_, df_val):
         return None
     else:
         df = pd.read_json(df_val, orient="split")
+        df["Hora incio"] = pd.to_datetime(df["Hora incio"], unit="ms").dt.strftime("%Y-%m-%dT%H:%M:%S")
 
         return dcc.send_data_frame(
             df.to_csv,
