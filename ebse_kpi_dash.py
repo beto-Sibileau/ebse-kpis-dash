@@ -9,7 +9,7 @@
 # python modules
 import base64
 import csv
-from dash import Dash, dcc, html, callback_context
+from dash import Dash, dcc, html, callback_context, no_update
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State
 from datetime import date, datetime, timedelta
@@ -693,7 +693,9 @@ def read_csv_file(contents, filename, date):
         if "csv" in filename:
             # Assume user uploaded a csv file
             # read csv into dataframe: appointments
-            app_df = pd.read_csv(io.BytesIO(decoded))
+            app_df = pd.read_csv(io.BytesIO(decoded)).rename(
+                columns={"Hora d'inici": "Hora d_inici"}
+            )
         else:
             # Warn user hasn't uploaded a csv file
             return (
@@ -711,11 +713,11 @@ def read_csv_file(contents, filename, date):
     # simple column validation: minimum check of exported database
     col_names_2_check = [
         "Cita ID",
-        "Nombre del cliente",
+        "Nom del client",
         "Voluntari/a",
         "Servei",
-        "Hora incio",
-        "Hora final",
+        "Hora d_inici",
+        "Temps de finalització",
         "Número de personas",
         "Tipologia P1",
         "Gènere P1",
@@ -729,11 +731,23 @@ def read_csv_file(contents, filename, date):
         "Tipologia P4",
         "Gènere P4",
         "Edat P4",
+        "Motiu d'anul·lacio"
     ]
     # column list above must be in dataframe
     col_check = [col in app_df.columns for col in col_names_2_check]
     # missing columns
     miss_col = [i for (i, v) in zip(col_names_2_check, col_check) if not v]
+
+    # found Amelia update 2026 shifts column information
+    if ("Tipologia P1" not in miss_col and app_df["Tipologia P1"].isnull().all()):
+        app_df.rename(
+            columns={
+                a:b for a,b in zip(
+                    col_names_2_check[8:], col_names_2_check[7:-1]
+                )
+            },
+            inplace=True
+        )
 
     # return ingestion message and read csv
     return (
@@ -805,7 +819,7 @@ def update_modal(msg_in, click_close, is_open):
         )
     else:
         # button close
-        return {}, not is_open
+        return no_update, not is_open
 
 
 # #### Return Download message in *Bootstrap Modal*
@@ -833,7 +847,7 @@ def update_modal_dwd(msg_dwd, _, is_open_dwd):
         )
     else:
         # button close
-        return {}, not is_open_dwd
+        return no_update, not is_open_dwd
 
 
 # #### Return Validation message in *Bootstrap Modal*
@@ -861,7 +875,7 @@ def update_modal_val(msg_val, _, is_open_val):
         )
     else:
         # button close
-        return {}, not is_open_val
+        return no_update, not is_open_val
 
 
 # #### Update Cards Body - KPIs `passejades` and `usuaries`
@@ -872,21 +886,21 @@ def update_modal_val(msg_val, _, is_open_val):
 # appointments table: filter, calculate
 def kpis_calc(df, ini_date, end_date):
     # json to dataframe
-    df = pd.read_json(df, orient="split")
+    df = pd.read_json(io.StringIO(df), orient="split")
 
     # transform datetimes
-    df["Hora incio"] = pd.to_datetime(df["Hora incio"], format="%d de %B de %Y %H:%M")
-    df["Hora final"] = pd.to_datetime(df["Hora final"], format="%d de %B de %Y %H:%M")
+    df["Hora d_inici"] = pd.to_datetime(df["Hora d_inici"], format="%d de %B de %Y %H:%M")
+    df["Temps de finalització"] = pd.to_datetime(df["Temps de finalització"], format="%d de %B de %Y %H:%M")
 
     # cast ini_date
     ini_date = pd.Timestamp(date.fromisoformat(ini_date))
     # cast and include end_date
     end_date = pd.Timestamp(date.fromisoformat(end_date) + timedelta(days=1))
 
-    # filter `Hora incio` within dates
+    # filter `Hora d_inici` within dates
     query_dates = [
-        "`Hora incio` >= @ini_date",
-        "`Hora incio` <= @end_date",
+        "`Hora d_inici` >= @ini_date",
+        "`Hora d_inici` <= @end_date",
     ]
     df_in_dates = df.query("&".join(query_dates)).reset_index(drop=True)
 
@@ -901,13 +915,13 @@ def kpis_calc(df, ini_date, end_date):
             "N/A",
             [],
             "",
-            {},
+            None,
             [],
             "",
-            {},
+            None,
             [],
             "",
-            {},
+            None,
         )
 
     # eliminate duplicated `Cita ID` (keep first)
@@ -922,13 +936,13 @@ def kpis_calc(df, ini_date, end_date):
         f"{servei_key}&~{maintain_key}", engine="python"
     ).reset_index(drop=True)
 
-    # client names: `Nombre del cliente`
-    client_names = df_passeig_in_dates["Nombre del cliente"].dropna().unique()
+    # client names: `Nom del client`
+    client_names = df_passeig_in_dates["Nom del client"].dropna().unique()
     # filter amenities changed logic: digit/s at any point
     amenity_types = [x for x in client_names if re.findall(r"\d+", x)]
 
     # add N/A if empty clients
-    if df_passeig_in_dates["Nombre del cliente"].isnull().any():
+    if df_passeig_in_dates["Nom del client"].isnull().any():
         amenity_types.append("N/A")
 
     # replace client names as `Usuàries Particulars` if any
@@ -966,9 +980,9 @@ def kpis_calc(df, ini_date, end_date):
 
     # `passejades` kpi_3: Total of aproved hours
     kpi_3 = (
-        df_kpi_1["Hora final"] - df_kpi_1["Hora incio"]
+        df_kpi_1["Temps de finalització"] - df_kpi_1["Hora d_inici"]
     ).dt.components.hours.sum() + (
-        df_kpi_1["Hora final"] - df_kpi_1["Hora incio"]
+        df_kpi_1["Temps de finalització"] - df_kpi_1["Hora d_inici"]
     ).dt.components.minutes.sum() / 60
 
     # kpi_1: Total number of people
@@ -1015,21 +1029,21 @@ def kpis_calc(df, ini_date, end_date):
         drop=True
     )
     # replace names if empty: "N/A"
-    df_volunteer_dates["Voluntari/a"].fillna(value="N/A", inplace=True)
+    df_volunteer_dates["Voluntari/a"] = df_volunteer_dates["Voluntari/a"].fillna(value="N/A")
 
     # add column hours for volunteers list
     df_volunteer_dates["Hours"] = (
-        df_volunteer_dates["Hora final"] - df_volunteer_dates["Hora incio"]
+        df_volunteer_dates["Temps de finalització"] - df_volunteer_dates["Hora d_inici"]
     ).dt.components.hours + (
-        df_volunteer_dates["Hora final"] - df_volunteer_dates["Hora incio"]
+        df_volunteer_dates["Temps de finalització"] - df_volunteer_dates["Hora d_inici"]
     ).dt.components.minutes / 60
     # aggregate df_volunteer_dates for volunteers list
     df_volunteer_list = (
         df_volunteer_dates.groupby("Voluntari/a", sort=False)
-        .agg({"Hours": "sum", "Servei": "last", "Hora incio": "last"})
+        .agg({"Hours": "sum", "Servei": "last", "Hora d_inici": "last"})
         .reset_index()
         .sort_values("Hours", ascending=False, ignore_index=True)
-        .rename(columns={"Servei": "Last Servei", "Hora incio": "Last Date"})
+        .rename(columns={"Servei": "Last Servei", "Hora d_inici": "Last Date"})
     )
     df_volunteer_list.loc[:, "Last Date"] = df_volunteer_list["Last Date"].dt.strftime(
         "%Y-%m-%d"
@@ -1067,7 +1081,7 @@ def kpis_calc(df, ini_date, end_date):
         "",
         # csv to json: sharing data within Dash
         df_kpi_1.to_json(orient="split"),
-        # dropdown amenities: carles suggests full `Nombre del cliente` sorted
+        # dropdown amenities: carles suggests full `Nom del client` sorted
         [{"label": v, "value": v} for v in sorted(amenity_types, key=str.lower)],
         "",
         # csv to json: sharing data within Dash
@@ -1136,7 +1150,7 @@ def update_kpis(start_date, end_date, _, app_df):
 # filtered aproved `passejades` within dates: user type calculations
 def kpis_calc_user_type(df_filtered, user_type):
     # json to dataframe
-    df = pd.read_json(df_filtered, orient="split")
+    df = pd.read_json(io.StringIO(df_filtered), orient="split")
 
     # user type columns filters
     user_type_masks = [df[f"Tipologia P{i}"] == user_type for i in range(1, 5)]
@@ -1219,31 +1233,31 @@ def update_kpis_user_type(user_type, df_in_date):
 def kpis_calc_amenity(df_aprov, df_cancel, amenity):
     # json to dataframe: aproved within dates
     df_aprov = pd.read_json(
-        df_aprov, orient="split", convert_dates=["Hora incio", "Hora final"]
+        io.StringIO(df_aprov), orient="split", convert_dates=["Hora d_inici", "Temps de finalització"]
     )
     # capture empty as "N/A"
-    df_aprov["Nombre del cliente"].fillna(value="N/A", inplace=True)
+    df_aprov["Nom del client"] = df_aprov["Nom del client"].fillna(value="N/A")
 
     # json to dataframe: cancelled within dates
     df_cancel = pd.read_json(
-        df_cancel, orient="split", convert_dates=["Hora incio", "Hora final"]
+        io.StringIO(df_cancel), orient="split", convert_dates=["Hora d_inici", "Temps de finalització"]
     )
     # capture empty as "N/A"
-    df_cancel["Nombre del cliente"].fillna(value="N/A", inplace=True)
+    df_cancel["Nom del client"] = df_cancel["Nom del client"].fillna(value="N/A")
 
     # filter amenity aproved
-    df_kpi_1 = df_aprov.query("`Nombre del cliente` == @amenity").reset_index(drop=True)
+    df_kpi_1 = df_aprov.query("`Nom del client` == @amenity").reset_index(drop=True)
 
     # filter amenity cancelled
-    df_kpi_2 = df_cancel.query("`Nombre del cliente` == @amenity").reset_index(
+    df_kpi_2 = df_cancel.query("`Nom del client` == @amenity").reset_index(
         drop=True
     )
 
     # `passejades` in amenity kpi_3: Total of aproved hours
     kpi_3 = (
-        df_kpi_1["Hora final"] - df_kpi_1["Hora incio"]
+        df_kpi_1["Temps de finalització"] - df_kpi_1["Hora d_inici"]
     ).dt.components.hours.sum() + (
-        df_kpi_1["Hora final"] - df_kpi_1["Hora incio"]
+        df_kpi_1["Temps de finalització"] - df_kpi_1["Hora d_inici"]
     ).dt.components.minutes.sum() / 60
 
     # kpi_4: Total number of people in amenity
@@ -1321,7 +1335,7 @@ def update_kpis_amenity(amenity, df_aprov_in_date, df_cancel_in_date):
 # filter aggregated volunteer list within dates
 def kpi_calc_volunteer(df_volunteer_list, volunteer):
     # json to dataframe
-    df = pd.read_json(df_volunteer_list, orient="split")
+    df = pd.read_json(io.StringIO(df_volunteer_list), orient="split")
 
     # user type columns filters
     kpi_1 = df.query("`Voluntari/a` == @volunteer").Hours.values[0]
@@ -1375,7 +1389,7 @@ def download_volunteers_list(_, df_volunteer_dates):
             None,
         )
     else:
-        df = pd.read_json(df_volunteer_dates, orient="split")
+        df = pd.read_json(io.StringIO(df_volunteer_dates), orient="split")
         df["Last Date"] = pd.to_datetime(df["Last Date"], unit="ms").dt.strftime("%Y-%m-%d")
         df_temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".csv")
         df_temp_file.flush()
@@ -1435,7 +1449,7 @@ def validate_missing(_, df_aprov_in_date):
 
     else:
         df = pd.read_json(
-            df_aprov_in_date, orient="split", convert_dates=["Hora incio"]
+            io.StringIO(df_aprov_in_date), orient="split", convert_dates=["Hora d_inici"]
         )
 
         if df.empty:
@@ -1475,8 +1489,8 @@ def validate_missing(_, df_aprov_in_date):
             df.loc[:, "Número de personas"] = pd.to_numeric(
                 df["Número de personas"].str.split().str[1], errors="coerce"
             )
-            # format "Hora incio" column as suggested by Carles
-            df.loc[:, "Hora incio"] = df["Hora incio"].dt.strftime("%Y-%m-%d - T %H:%M")
+            # format "Hora d_inici" column as suggested by Carles
+            df.loc[:, "Hora d_inici"] = df["Hora d_inici"].dt.strftime("%Y-%m-%d - T %H:%M")
 
             # validation per user information columns
             user_tipo_cols = (
@@ -1502,8 +1516,8 @@ def validate_missing(_, df_aprov_in_date):
                 [
                     "Cita ID",
                     "Servei",
-                    "Hora incio",
-                    "Nombre del cliente",
+                    "Hora d_inici",
+                    "Nom del client",
                     "Número de personas",
                 ],
             )
@@ -1585,8 +1599,8 @@ def download_validation(_, df_val):
     if not df_val:
         return None
     else:
-        df = pd.read_json(df_val, orient="split")
-        df["Hora incio"] = pd.to_datetime(df["Hora incio"], unit="ms").dt.strftime("%Y-%m-%dT%H:%M:%S")
+        df = pd.read_json(io.StringIO(df_val), orient="split")
+        df["Hora d_inici"] = pd.to_datetime(df["Hora d_inici"], unit="ms").dt.strftime("%Y-%m-%dT%H:%M:%S")
 
         return dcc.send_data_frame(
             df.to_csv,
@@ -1601,4 +1615,4 @@ def download_validation(_, df_val):
 
 
 if __name__ == "__main__":
-    app.run_server(debug=True)
+    app.run(debug=True)
