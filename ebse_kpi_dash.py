@@ -92,7 +92,8 @@ appoint_row = dbc.Container(
                         html.Div(
                             id="uploading-state",
                             className="output-uploading-state",
-                            style={"color": "DarkGreen", "textAlign": "center"},
+                            style={"color": "DarkGreen",
+                                   "textAlign": "center"},
                         ),
                     ]
                 ),
@@ -114,7 +115,8 @@ appoint_row = dbc.Container(
                         html.Div(
                             id="validation-state",
                             className="output-validate-state",
-                            style={"color": "RoyalBlue", "textAlign": "center"},
+                            style={"color": "RoyalBlue",
+                                   "textAlign": "center"},
                         ),
                     ]
                 ),
@@ -156,7 +158,8 @@ def create_card(card_title, card_num):
             dbc.CardBody(
                 [
                     html.H4(card_title, className="card-title"),
-                    html.P("N/A", className="card-value", id=f"card-val-{card_num}"),
+                    html.P("N/A", className="card-value",
+                           id=f"card-val-{card_num}"),
                     # note there's card-text bootstrap class ...
                     # html.P(
                     #     "Target: $10.0 M",
@@ -244,8 +247,10 @@ cards_row_type = dbc.Container(
         ),
         dbc.Row(
             [
-                dbc.Col(create_card("KPI1: Quantitat de persones", 7), width="auto"),
-                dbc.Col(create_card("KPI2: Percentatge de dones", 8), width="auto"),
+                dbc.Col(create_card("KPI1: Quantitat de persones", 7),
+                        width="auto"),
+                dbc.Col(create_card("KPI2: Percentatge de dones", 8),
+                        width="auto"),
                 dbc.Col(create_card("KPI3: Extrems d’edat", 9), width="auto"),
                 dbc.Col(create_card("KPI4: Mitjana d’edat", 10), width="auto"),
             ],
@@ -295,7 +300,8 @@ amenity_row_type = dbc.Container(
                     create_card("KPI1: Quantitat de passejades fetes", 11), width="auto"
                 ),
                 dbc.Col(
-                    create_card("KPI2: Quantitat de passejades anul·lades", 12),
+                    create_card(
+                        "KPI2: Quantitat de passejades anul·lades", 12),
                     width="auto",
                 ),
                 dbc.Col(
@@ -308,8 +314,10 @@ amenity_row_type = dbc.Container(
         ),
         dbc.Row(
             [
-                dbc.Col(create_card("KPI4: Quantitat de persones", 14), width="auto"),
-                dbc.Col(create_card("KPI5: Percentatge de dones", 15), width="auto"),
+                dbc.Col(create_card("KPI4: Quantitat de persones", 14),
+                        width="auto"),
+                dbc.Col(create_card("KPI5: Percentatge de dones", 15),
+                        width="auto"),
                 dbc.Col(
                     create_card("KPI6: Mitjana d’edat de persones", 16), width="auto"
                 ),
@@ -405,7 +413,8 @@ fontawesome_stylesheet = "https://use.fontawesome.com/releases/v5.8.1/css/all.cs
 # Build App
 # app = JupyterDash(__name__, external_stylesheets=external_stylesheets)
 app = Dash(
-    __name__, external_stylesheets=[dbc.themes.BOOTSTRAP, fontawesome_stylesheet]
+    __name__, external_stylesheets=[
+        dbc.themes.BOOTSTRAP, fontawesome_stylesheet]
 )
 
 # to deploy using WSGI server
@@ -538,7 +547,8 @@ app.layout = html.Div(
                     ),
                     dbc.ModalBody(id="my-modal-body"),
                     dbc.ModalFooter(
-                        dbc.Button("Close", id="btn-close", class_name="ms-auto")
+                        dbc.Button("Close", id="btn-close",
+                                   class_name="ms-auto")
                     ),
                 ],
                 id="my-modal",
@@ -561,7 +571,8 @@ app.layout = html.Div(
                     ),
                     dbc.ModalBody(id="my-modal-body-dwd"),
                     dbc.ModalFooter(
-                        dbc.Button("Close", id="btn-close-dwd", class_name="ms-auto")
+                        dbc.Button("Close", id="btn-close-dwd",
+                                   class_name="ms-auto")
                     ),
                 ],
                 id="my-modal-dwd",
@@ -731,7 +742,7 @@ def read_csv_file(contents, filename, date):
         "Tipologia P4",
         "Gènere P4",
         "Edat P4",
-        "Motiu d'anul·lacio"
+        "Motiu d'anul·lació"
     ]
     # column list above must be in dataframe
     col_check = [col in app_df.columns for col in col_names_2_check]
@@ -740,9 +751,11 @@ def read_csv_file(contents, filename, date):
 
     # found Amelia update 2026 shifts column information
     if ("Tipologia P1" not in miss_col and app_df["Tipologia P1"].isnull().all()):
+        # drop the incomplete column
+        app_df.drop(columns="Tipologia P1", inplace=True)
         app_df.rename(
             columns={
-                a:b for a,b in zip(
+                a: b for a, b in zip(
                     col_names_2_check[8:], col_names_2_check[7:-1]
                 )
             },
@@ -770,7 +783,7 @@ def read_csv_file(contents, filename, date):
                 f"KPIs not calculated. Missing columns: {miss_col}",
             ],
             # no dataframe return
-            {},
+            None,
         )
     )
 
@@ -889,8 +902,10 @@ def kpis_calc(df, ini_date, end_date):
     df = pd.read_json(io.StringIO(df), orient="split")
 
     # transform datetimes
-    df["Hora d_inici"] = pd.to_datetime(df["Hora d_inici"], format="%d de %B de %Y %H:%M")
-    df["Temps de finalització"] = pd.to_datetime(df["Temps de finalització"], format="%d de %B de %Y %H:%M")
+    df["Hora d_inici"] = pd.to_datetime(
+        df["Hora d_inici"], format="%d de %B de %Y %H:%M")
+    df["Temps de finalització"] = pd.to_datetime(
+        df["Temps de finalització"], format="%d de %B de %Y %H:%M")
 
     # cast ini_date
     ini_date = pd.Timestamp(date.fromisoformat(ini_date))
@@ -930,7 +945,7 @@ def kpis_calc(df, ini_date, end_date):
 
     # filter `passejades` within dates (AND exclude maintenance key words)
     servei_pattern = r"(?i)T\d|tricicle"
-    servei_key = f"Servei.str.contains('{servei_pattern}', case=False, regex=True)"
+    servei_key = f"Servei.str.contains(r'{servei_pattern}', case=False, regex=True)"
     maintain_key = "Servei.str.contains('trasllat|manteniment', case=False)"
     df_passeig_in_dates = df_in_dates.query(
         f"{servei_key}&~{maintain_key}", engine="python"
@@ -949,12 +964,14 @@ def kpis_calc(df, ini_date, end_date):
     if len(amenity_types) < len(client_names):
         # check if `Usuàries Particulars` in amenity_types
         filter_particulars = (
-            pd.Series(amenity_types).str.contains("usuàries particulars", case=False)
+            pd.Series(amenity_types).str.contains(
+                "usuàries particulars", case=False)
             if len(amenity_types) > 0
             else np.array([False])
         )
         if filter_particulars.any():
-            private_user = pd.Series(amenity_types)[filter_particulars].values[0]
+            private_user = pd.Series(amenity_types)[
+                filter_particulars].values[0]
         else:
             private_user = "Usuàries Particulars"
             amenity_types.append("Usuàries Particulars")
@@ -1007,7 +1024,8 @@ def kpis_calc(df, ini_date, end_date):
     )
 
     # kpi_3: extreme ages (all people)
-    people_ages = np.concatenate([df_kpi_1[f"Edat P{i}"].dropna() for i in range(1, 5)])
+    people_ages = np.concatenate(
+        [df_kpi_1[f"Edat P{i}"].dropna() for i in range(1, 5)])
 
     max_age = int(people_ages.max()) if people_ages.size != 0 else "N/A"
     min_age = int(people_ages.min()) if people_ages.size != 0 else "N/A"
@@ -1015,7 +1033,8 @@ def kpis_calc(df, ini_date, end_date):
     # people types
     people_types = np.unique(
         np.concatenate(
-            [df_kpi_1[f"Tipologia P{i}"].dropna().unique() for i in range(1, 5)]
+            [df_kpi_1[f"Tipologia P{i}"].dropna().unique()
+             for i in range(1, 5)]
         )
     )
 
@@ -1029,13 +1048,16 @@ def kpis_calc(df, ini_date, end_date):
         drop=True
     )
     # replace names if empty: "N/A"
-    df_volunteer_dates["Voluntari/a"] = df_volunteer_dates["Voluntari/a"].fillna(value="N/A")
+    df_volunteer_dates["Voluntari/a"] = df_volunteer_dates["Voluntari/a"].fillna(
+        value="N/A")
 
     # add column hours for volunteers list
     df_volunteer_dates["Hours"] = (
-        df_volunteer_dates["Temps de finalització"] - df_volunteer_dates["Hora d_inici"]
+        df_volunteer_dates["Temps de finalització"] -
+        df_volunteer_dates["Hora d_inici"]
     ).dt.components.hours + (
-        df_volunteer_dates["Temps de finalització"] - df_volunteer_dates["Hora d_inici"]
+        df_volunteer_dates["Temps de finalització"] -
+        df_volunteer_dates["Hora d_inici"]
     ).dt.components.minutes / 60
     # aggregate df_volunteer_dates for volunteers list
     df_volunteer_list = (
@@ -1082,7 +1104,8 @@ def kpis_calc(df, ini_date, end_date):
         # csv to json: sharing data within Dash
         df_kpi_1.to_json(orient="split"),
         # dropdown amenities: carles suggests full `Nom del client` sorted
-        [{"label": v, "value": v} for v in sorted(amenity_types, key=str.lower)],
+        [{"label": v, "value": v}
+            for v in sorted(amenity_types, key=str.lower)],
         "",
         # csv to json: sharing data within Dash
         df_kpi_2.to_json(orient="split"),
@@ -1130,13 +1153,13 @@ def update_kpis(start_date, end_date, _, app_df):
             "N/A",
             [],
             "",
-            {},
+            None,
             [],
             "",
-            {},
+            None,
             [],
             "",
-            {},
+            None,
         )
     else:
         return kpis_calc(app_df, start_date, end_date)
@@ -1177,11 +1200,14 @@ def kpis_calc_user_type(df_filtered, user_type):
 
     # user type kpi_3 and 4: extreme and mean ages
     user_type_ages = np.concatenate(
-        [df[elem][f"Edat P{i + 1}"].dropna() for i, elem in enumerate(user_type_masks)]
+        [df[elem][f"Edat P{i + 1}"].dropna()
+         for i, elem in enumerate(user_type_masks)]
     )
 
-    user_type_max_age = int(user_type_ages.max()) if user_type_ages.size != 0 else "N/A"
-    user_type_min_age = int(user_type_ages.min()) if user_type_ages.size != 0 else "N/A"
+    user_type_max_age = int(
+        user_type_ages.max()) if user_type_ages.size != 0 else "N/A"
+    user_type_min_age = int(
+        user_type_ages.min()) if user_type_ages.size != 0 else "N/A"
     user_type_mean_age = user_type_ages.mean() if user_type_ages.size != 0 else "N/A"
 
     # return user type kpis 1 to 4
@@ -1243,10 +1269,12 @@ def kpis_calc_amenity(df_aprov, df_cancel, amenity):
         io.StringIO(df_cancel), orient="split", convert_dates=["Hora d_inici", "Temps de finalització"]
     )
     # capture empty as "N/A"
-    df_cancel["Nom del client"] = df_cancel["Nom del client"].fillna(value="N/A")
+    df_cancel["Nom del client"] = df_cancel["Nom del client"].fillna(
+        value="N/A")
 
     # filter amenity aproved
-    df_kpi_1 = df_aprov.query("`Nom del client` == @amenity").reset_index(drop=True)
+    df_kpi_1 = df_aprov.query(
+        "`Nom del client` == @amenity").reset_index(drop=True)
 
     # filter amenity cancelled
     df_kpi_2 = df_cancel.query("`Nom del client` == @amenity").reset_index(
@@ -1301,7 +1329,8 @@ def kpis_calc_amenity(df_aprov, df_cancel, amenity):
             if total_gen_amenity != 0
             else "N/A"
         ),
-        (f"{amenity_mean_age:3.1f} anys" if type(amenity_mean_age) != str else "N/A"),
+        (f"{amenity_mean_age:3.1f} anys" if type(
+            amenity_mean_age) != str else "N/A"),
     )
 
 
@@ -1390,7 +1419,8 @@ def download_volunteers_list(_, df_volunteer_dates):
         )
     else:
         df = pd.read_json(io.StringIO(df_volunteer_dates), orient="split")
-        df["Last Date"] = pd.to_datetime(df["Last Date"], unit="ms").dt.strftime("%Y-%m-%d")
+        df["Last Date"] = pd.to_datetime(
+            df["Last Date"], unit="ms").dt.strftime("%Y-%m-%d")
         df_temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".csv")
         df_temp_file.flush()
         df.to_csv(
@@ -1408,7 +1438,8 @@ def download_volunteers_list(_, df_volunteer_dates):
             ],
             # dcc.send_data_frame --> encoding not working apparently
             # use instead dcc.send_file
-            dcc.send_file(df_temp_file.name, filename="totals_voluntaries.csv"),
+            dcc.send_file(df_temp_file.name,
+                          filename="totals_voluntaries.csv"),
         )
 
 
@@ -1490,7 +1521,8 @@ def validate_missing(_, df_aprov_in_date):
                 df["Número de personas"].str.split().str[1], errors="coerce"
             )
             # format "Hora d_inici" column as suggested by Carles
-            df.loc[:, "Hora d_inici"] = df["Hora d_inici"].dt.strftime("%Y-%m-%d - T %H:%M")
+            df.loc[:, "Hora d_inici"] = df["Hora d_inici"].dt.strftime(
+                "%Y-%m-%d - T %H:%M")
 
             # validation per user information columns
             user_tipo_cols = (
@@ -1499,10 +1531,12 @@ def validate_missing(_, df_aprov_in_date):
                 .sum(axis="columns")
             )
             user_gend_cols = (
-                df[[f"Gènere P{i}" for i in range(1, 5)]].notnull().sum(axis="columns")
+                df[[f"Gènere P{i}" for i in range(1, 5)]].notnull().sum(
+                    axis="columns")
             )
             user_age_cols = (
-                df[[f"Edat P{i}" for i in range(1, 5)]].notnull().sum(axis="columns")
+                df[[f"Edat P{i}" for i in range(1, 5)]].notnull().sum(
+                    axis="columns")
             )
 
             # users information columns
@@ -1600,7 +1634,8 @@ def download_validation(_, df_val):
         return None
     else:
         df = pd.read_json(io.StringIO(df_val), orient="split")
-        df["Hora d_inici"] = pd.to_datetime(df["Hora d_inici"], unit="ms").dt.strftime("%Y-%m-%dT%H:%M:%S")
+        df["Hora d_inici"] = pd.to_datetime(
+            df["Hora d_inici"], unit="ms").dt.strftime("%Y-%m-%dT%H:%M:%S")
 
         return dcc.send_data_frame(
             df.to_csv,
