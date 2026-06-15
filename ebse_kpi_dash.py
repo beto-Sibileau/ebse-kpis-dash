@@ -601,7 +601,7 @@ app.layout = html.Div(
                                     html.Div(
                                         [
                                             dbc.Button(
-                                                "Download",
+                                                "Download Validation Table",
                                                 id="btn-dwd-val",
                                                 class_name="ms-auto",
                                             ),
@@ -631,7 +631,7 @@ app.layout = html.Div(
                 keyboard=False,
                 backdrop="static",
                 scrollable=True,
-                size="lg",
+                size="md",
                 centered=True,
             ),
             id="loading-modal-val",
@@ -1611,25 +1611,15 @@ def validate_missing(_, df_aprov_in_date):
                                 html.Strong(
                                     "Missing Personal Information or Invalid Age Type"),
                                 html.Br(),
-                                "Check ",
+                                "Check the following ",
                                 html.Code("Cita ID"),
-                                html.Em(" below:"),
+                                html.Em(" listed below:"),
                                 html.Br(),
                             ]
                         ),
-                        html.Div(
-                            [
-                                dbc.Table.from_dataframe(
-                                    df_output,
-                                    id="val-table",
-                                    striped=True,
-                                    bordered=True,
-                                    hover=True,
-                                    responsive=True,
-                                    size="lg",
-                                    color="warning",
-                                ),
-                            ]
+                        html.Ul(
+                            [html.Li(cid) for cid in df_output["Cita ID"]],
+                            style={"paddingLeft": "50px"},
                         ),
                     ],
                     {"display": "inline"},
