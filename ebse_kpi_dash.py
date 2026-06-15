@@ -1025,7 +1025,11 @@ def kpis_calc(df, ini_date, end_date):
 
     # kpi_3: extreme ages (all people)
     people_ages = np.concatenate(
-        [df_kpi_1[f"Edat P{i}"].dropna() for i in range(1, 5)])
+        [
+            pd.to_numeric(df_kpi_1[f"Edat P{i}"], errors="coerce").dropna()
+            for i in range(1, 5)
+        ]
+    )
 
     max_age = int(people_ages.max()) if people_ages.size != 0 else "N/A"
     min_age = int(people_ages.min()) if people_ages.size != 0 else "N/A"
@@ -1102,17 +1106,17 @@ def kpis_calc(df, ini_date, end_date):
         dd_people_options,
         "",
         # csv to json: sharing data within Dash
-        df_kpi_1.to_json(orient="split"),
+        df_kpi_1.to_json(orient="split", date_format="iso"),
         # dropdown amenities: carles suggests full `Nom del client` sorted
         [{"label": v, "value": v}
             for v in sorted(amenity_types, key=str.lower)],
         "",
         # csv to json: sharing data within Dash
-        df_kpi_2.to_json(orient="split"),
+        df_kpi_2.to_json(orient="split", date_format="iso"),
         dd_volunteer_options,
         "",
         # csv to json: sharing data within Dash
-        df_volunteer_list.to_json(orient="split"),
+        df_volunteer_list.to_json(orient="split", date_format="iso"),
     )
 
 
@@ -1143,7 +1147,10 @@ def kpis_calc(df, ini_date, end_date):
 )
 def update_kpis(start_date, end_date, _, app_df):
     # file not available or inconsistent dates
-    if not app_df or (start_date > end_date):
+    if (
+        not app_df or (start_date is None) or (end_date is None) or (
+            start_date > end_date)
+    ):
         return (
             "N/A",
             "N/A",
@@ -1200,8 +1207,10 @@ def kpis_calc_user_type(df_filtered, user_type):
 
     # user type kpi_3 and 4: extreme and mean ages
     user_type_ages = np.concatenate(
-        [df[elem][f"Edat P{i + 1}"].dropna()
-         for i, elem in enumerate(user_type_masks)]
+        [
+            pd.to_numeric(df[elem][f"Edat P{i + 1}"], errors="coerce").dropna()
+            for i, elem in enumerate(user_type_masks)
+        ]
     )
 
     user_type_max_age = int(
@@ -1311,7 +1320,10 @@ def kpis_calc_amenity(df_aprov, df_cancel, amenity):
 
     # kpi_6: mean age of aproved people in amenity
     people_ages_amenity = np.concatenate(
-        [df_kpi_1[f"Edat P{i}"].dropna() for i in range(1, 5)]
+        [
+            pd.to_numeric(df_kpi_1[f"Edat P{i}"], errors="coerce").dropna()
+            for i in range(1, 5)
+        ]
     )
 
     amenity_mean_age = (
@@ -1516,8 +1528,8 @@ def validate_missing(_, df_aprov_in_date):
             )
 
         else:
-            # split number of aproved users
-            df.loc[:, "Número de personas"] = pd.to_numeric(
+            # number of aproved users (str to numeric)
+            df["Número de personas"] = pd.to_numeric(
                 df["Número de personas"].str.split().str[1], errors="coerce"
             )
             # format "Hora d_inici" column as suggested by Carles
@@ -1534,9 +1546,11 @@ def validate_missing(_, df_aprov_in_date):
                 df[[f"Gènere P{i}" for i in range(1, 5)]].notnull().sum(
                     axis="columns")
             )
-            user_age_cols = (
-                df[[f"Edat P{i}" for i in range(1, 5)]].notnull().sum(
-                    axis="columns")
+            user_age_valid_cols = (
+                df[[f"Edat P{i}" for i in range(1, 5)]]
+                .apply(pd.to_numeric, errors="coerce")
+                .notnull()
+                .sum(axis="columns")
             )
 
             # users information columns
@@ -1562,7 +1576,7 @@ def validate_missing(_, df_aprov_in_date):
             df_gend_not_complete = df[user_gend_cols != df["Número de personas"]][
                 np.concatenate(user_info_cols)
             ].reset_index(drop=True)
-            df_age_not_complete = df[user_age_cols != df["Número de personas"]][
+            df_age_not_complete = df[user_age_valid_cols != df["Número de personas"]][
                 np.concatenate(user_info_cols)
             ].reset_index(drop=True)
 
@@ -1594,7 +1608,8 @@ def validate_missing(_, df_aprov_in_date):
                     [
                         html.P(
                             [
-                                html.Strong("Missing Information"),
+                                html.Strong(
+                                    "Missing Personal Information or Invalid Age Type"),
                                 html.Br(),
                                 "Check ",
                                 html.Code("Cita ID"),
@@ -1618,7 +1633,7 @@ def validate_missing(_, df_aprov_in_date):
                         ),
                     ],
                     {"display": "inline"},
-                    df_output.to_json(orient="split"),
+                    df_output.to_json(orient="split", date_format="iso"),
                 )
 
 
